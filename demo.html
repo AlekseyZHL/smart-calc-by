@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Онлайн-расчёт стоимости за 45 секунд</title>
+<style>
+  :root {
+    --bg: #070b14;
+    --card: #0f172a;
+    --card2: #162038;
+    --border: rgba(255,255,255,0.09);
+    --accent: #10b981;
+    --accent-glow: rgba(16,185,129,0.28);
+    --gold: #f59e0b;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif; }
+  body {
+    background: radial-gradient(circle at 15% 10%, rgba(16,185,129,0.14), transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(59,130,246,0.12), transparent 45%),
+                var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 48px;
+  }
+  .owner-bar {
+    background: linear-gradient(90deg, #1e293b, #0f172a);
+    border-bottom: 1px solid rgba(245,158,11,0.35);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(12px);
+  }
+  .owner-badge {
+    font-size: 12px;
+    color: #fde68a;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 600;
+  }
+  .pulse-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--gold);
+    box-shadow: 0 0 0 0 rgba(245,158,11,0.7);
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(245,158,11,0.7); }
+    70% { box-shadow: 0 0 0 9px rgba(245,158,11,0); }
+    100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+  }
+  .owner-btn {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #090d16;
+    border: none;
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform .15s ease;
+  }
+  .owner-btn:hover { transform: translateY(-1px) scale(1.02); }
+
+  .wrap { max-width: 720px; margin: 0 auto; padding: 22px 16px 0; }
+  .brand-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-bottom: 22px; flex-wrap: wrap;
+  }
+  .brand-left { display: flex; align-items: center; gap: 12px; }
+  .logo-box {
+    width: 46px; height: 46px; border-radius: 13px;
+    background: linear-gradient(135deg, var(--accent), #059669);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 20px; color: #04130d;
+    box-shadow: 0 8px 22px var(--accent-glow);
+  }
+  .brand-title { font-size: 19px; font-weight: 800; letter-spacing: -0.3px; }
+  .brand-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .phone-pill {
+    text-decoration: none; color: var(--text);
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    padding: 8px 13px; border-radius: 10px; font-size: 13px; font-weight: 700;
+  }
+
+  .hero-card {
+    background: linear-gradient(180deg, rgba(22,32,56,0.92), rgba(15,23,42,0.96));
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 26px 22px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+  }
+  .tag-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(16,185,129,0.13); color: #34d399;
+    border: 1px solid rgba(16,185,129,0.3);
+    padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 700;
+    margin-bottom: 14px;
+  }
+  h1 { font-size: clamp(22px, 5vw, 30px); line-height: 1.18; font-weight: 850; margin-bottom: 10px; }
+  .hero-desc { color: var(--muted); font-size: 14.5px; line-height: 1.5; margin-bottom: 20px; }
+
+  .progress-wrap { margin-bottom: 20px; }
+  .progress-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 7px; font-weight: 600; }
+  .progress-track { height: 7px; background: rgba(255,255,255,0.07); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #34d399); width: 25%; transition: width .3s ease; }
+
+  .step-q { font-size: 17px; font-weight: 750; margin-bottom: 14px; }
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  @media (max-width: 520px) { .options-grid { grid-template-columns: 1fr; } }
+
+  .opt-btn {
+    background: rgba(255,255,255,0.035);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 15px;
+    text-align: left;
+    color: var(--text);
+    cursor: pointer;
+    transition: all .16s ease;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .opt-btn:hover { border-color: rgba(16,185,129,0.55); background: rgba(16,185,129,0.07); }
+  .opt-btn.active {
+    border-color: var(--accent);
+    background: rgba(16,185,129,0.14);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .opt-main { font-size: 14px; font-weight: 700; }
+  .opt-sub { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+  .opt-check {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1.5px solid var(--muted); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 11px;
+  }
+  .opt-btn.active .opt-check { background: var(--accent); border-color: var(--accent); color: #03150e; font-weight: 900; }
+
+  .nav-row { display: flex; justify-content: space-between; gap: 10px; margin-top: 6px; }
+  .btn-sec {
+    background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid var(--border);
+    padding: 12px 18px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 14px;
+  }
+  .btn-pri {
+    flex: 1; background: linear-gradient(135deg, var(--accent), #059669);
+    color: #03140d; border: none; padding: 13px 20px; border-radius: 12px;
+    font-weight: 800; cursor: pointer; font-size: 15px;
+    box-shadow: 0 10px 24px var(--accent-glow);
+  }
+
+  .result-box {
+    background: linear-gradient(145deg, rgba(16,185,129,0.14), rgba(15,23,42,0.9));
+    border: 1.5px solid rgba(16,185,129,0.45);
+    border-radius: 18px; padding: 20px; margin-bottom: 16px;
+  }
+  .est-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.7px; color: #6ee7b7; font-weight: 800; }
+  .est-price { font-size: clamp(26px, 6vw, 36px); font-weight: 900; margin: 6px 0 8px; color: #ffffff; }
+  .gift-banner {
+    background: rgba(245,158,11,0.14); border: 1px dashed rgba(245,158,11,0.5);
+    border-radius: 11px; padding: 10px 12px; font-size: 13px; color: #fde68a; margin-bottom: 16px;
+  }
+  .inp {
+    width: 100%; background: rgba(0,0,0,0.3); border: 1.5px solid var(--border);
+    color: var(--text); padding: 13px 14px; border-radius: 12px; font-size: 15px; margin-bottom: 10px;
+  }
+  .inp:focus { outline: none; border-color: var(--accent); }
+  .msg-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .msg-tab {
+    flex: 1; padding: 9px; border-radius: 10px; border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04); color: var(--muted); font-size: 12.5px; font-weight: 700; cursor: pointer;
+  }
+  .msg-tab.active { background: rgba(59,130,246,0.18); border-color: #3b82f6; color: #93c5fd; }
+
+  .trust-strip {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px;
+  }
+  .trust-item {
+    background: rgba(255,255,255,0.025); border: 1px solid var(--border);
+    border-radius: 13px; padding: 12px; text-align: center;
+  }
+  .trust-val { font-size: 16px; font-weight: 850; color: #34d399; }
+  .trust-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  /* Simulated Telegram Owner Notification Modal */
+  .tg-modal-backdrop {
+    position: fixed; inset: 0; background: rgba(3,7,18,0.82); backdrop-filter: blur(7px);
+    display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100;
+  }
+  .tg-modal-backdrop.open { display: flex; }
+  .tg-phone {
+    width: 100%; max-width: 400px; background: #17212b; border: 2px solid #2b5278;
+    border-radius: 24px; overflow: hidden; box-shadow: 0 25px 70px rgba(0,0,0,0.75);
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(22px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .tg-top {
+    background: #232e3c; padding: 13px 16px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .tg-bot-name { font-size: 14px; font-weight: 800; color: #fff; }
+  .tg-bot-sub { font-size: 11px; color: #6ab2f2; }
+  .tg-body { padding: 16px; }
+  .tg-bubble {
+    background: #182533; border-left: 3px solid #34d399; border-radius: 12px;
+    padding: 13px; font-size: 13px; line-height: 1.5; color: #e2e8f0;
+  }
+  .tg-inline-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .tg-ibtn {
+    background: #2b5278; color: #fff; text-align: center; padding: 8px;
+    border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none;
+  }
+  .tg-foot { padding: 12px 16px 16px; background: #0f172a; font-size: 12px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.08); }
+</style>
+</head>
+<body>
+
+<div class="owner-bar" id="ownerBar">
+  <div class="owner-badge">
+    <span class="pulse-dot"></span>
+    <span id="ownerBannerText">Персональный прототип для вашей компании</span>
+  </div>
+  <button class="owner-btn" onclick="openOwnerPreview()">👁 Как заявка прилетит вам в Telegram (1.2 сек)</button>
+</div>
+
+<div class="wrap">
+  <div class="brand-header">
+    <div class="brand-left">
+      <div class="logo-box" id="brandInitial">D</div>
+      <div>
+        <div class="brand-title" id="brandName">Детейлинг Центр</div>
+        <div class="brand-sub" id="brandAddr">г. Минск • Онлайн-расчёт сметы 24/7</div>
+      </div>
+    </div>
+    <a class="phone-pill" id="brandPhone" href="tel:+375290000000">+375 (29) 000-00-00</a>
+  </div>
+
+  <div class="hero-card">
+    <div class="tag-pill" id="nicheBadge">⚡ Онлайн-калькулятор стоимости 2026</div>
+    <h1 id="heroTitle">Рассчитайте точную стоимость под ваши параметры за 45 секунд</h1>
+    <p class="hero-desc" id="heroDesc">Ответьте на 4 быстрых вопроса без звонков менеджера — система мгновенно покажет вилку цены и закрепит за вами бонус.</p>
+
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span id="stepCounter">Шаг 1 из 4</span>
+        <span id="discountHint">🎁 Бонус разблокирован на 25%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div id="quizBody"></div>
+  </div>
+
+  <div class="trust-strip">
+    <div class="trust-item">
+      <div class="trust-val">45 сек</div>
+      <div class="trust-lbl">Точный расчёт без ожидания</div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-val">100%</div>
+      <div class="trust-lbl">Фиксация сметы и подарка</div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-val">Telegram</div>
+      <div class="trust-lbl">Удобно без навязчивых звонков</div>
+    </div>
+  </div>
+</div>
+
+<!-- Telegram Owner Notification Simulator Modal -->
+<div class="tg-modal-backdrop" id="tgModal" onclick="if(event.target===this)closeOwnerPreview()">
+  <div class="tg-phone">
+    <div class="tg-top">
+      <div>
+        <div class="tg-bot-name">🤖 Бот Заявок — <span id="tgCompTitle">Компания</span></div>
+        <div class="tg-bot-sub">мгновенное уведомление руководителю</div>
+      </div>
+      <button onclick="closeOwnerPreview()" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div class="tg-body">
+      <div class="tg-bubble" id="tgBubbleContent"></div>
+      <div class="tg-inline-btns">
+        <a href="javascript:void(0)" class="tg-ibtn">📞 Набрать клиента</a>
+        <a href="javascript:void(0)" class="tg-ibtn">💬 Открыть Telegram/Viber</a>
+      </div>
+    </div>
+    <div class="tg-foot">
+      ✅ <b>Так каждая заявка с вашего сайта или Instagram прилетает прямо в ваш телефон за 1 секунду.</b> Никакой ежемесячной абонплаты конструкторам квизов — конверсия мобильного трафика вырастает в 2.4–3 раза!
+    </div>
+  </div>
+</div>
+
+<script>
+const CLIENTS = {"podboravtobel": {"n": "Подбор-Авто Минск", "c": "autopodbor", "p": "+375 44 790-84-85", "a": "г. Минск", "u": "https://xn----7sbdbcm3eacgpbr.xn--90ais/"}, "detailingpro": {"n": "Detailing-PRO", "c": "detailing", "p": "+375 29 125-41-42", "a": "г. Минск, пр. Победителей, 84 (ArenaCity)", "u": "https://detailing-pro.by/"}, "4kolesa": {"n": "4 Колеса Импорт", "c": "autoimport", "p": "+375 44 788-04-04", "a": "г. Минск, пр. Победителей, 111В", "u": "https://4kolesa.by/prignati-avto/"}, "dasdrive": {"n": "DAS DRIVE", "c": "autoimport", "p": "+375 44 570-96-56", "a": "г. Минск", "u": "https://dasdrive.by/import-china"}, "smiledetailing": {"n": "Smile Detailing", "c": "detailing", "p": "+375 44 576-23-44", "a": "г. Минск", "u": "https://smiledetailing.by/"}, "autovera": {"n": "Auto Vera", "c": "detailing", "p": "+375 29 964-99-91", "a": "Минский р-н, Королищевичи, ул. Совхозная, 2Д", "u": "https://auto-vera.by/"}, "ikuhni": {"n": "Идеал Кухни", "c": "kitchen", "p": "+375 44 578-77-77", "a": "г. Минск", "u": "https://ikuhni.by/"}, "energiadetailing": {"n": "Energia Detailing", "c": "detailing", "p": "+375 29 640-99-99", "a": "г. Минск, ул. Тимирязева, 70", "u": "https://energiadetailing.by/"}, "remontprofi": {"n": "РемонтПрофи.бел", "c": "renovation", "p": "+375 29 669-30-83", "a": "г. Минск, ул. Савицкого, 12", "u": "https://xn----itbkoffchdgt2a.xn--90ais/"}, "primebeli": {"n": "ПриМебели", "c": "detailing", "p": "+375 29 120-80-55", "a": "г. Минск", "u": "https://primebeli.by/"}, "detailing4me": {"n": "Detailing4Me", "c": "detailing", "p": "+375 29 717-74-42", "a": "г. Минск, ул. Совхозная, 2Д", "u": "https://detailing4me.by/"}, "carsusa": {"n": "CarsUSA Минск", "c": "autoimport", "p": "+375 29 626-55-66", "a": "г. Минск, Логойский тракт, 22А к.2, оф. 812", "u": "https://carsusa.by/"}, "riancar": {"n": "RianCar", "c": "detailing", "p": "+375 (29) 362-52-46", "a": "г. Минск", "u": "https://riancar.by/"}, "globaldetailing": {"n": "GlobalDetailing", "c": "detailing", "p": "+375 29 319-13-13", "a": "г. Минск, ул. Семёнова, 35 (Корона-Сити)", "u": "https://global-detailing.by/"}, "solutionauto": {"n": "Auto Solution", "c": "autoimport", "p": "+375 29 678-60-60", "a": "г. Минск, ул. Филимонова, 53А", "u": "https://solutionauto.by/"}, "kitmotor": {"n": "KitMotor", "c": "autoimport", "p": "+375 44 744-11-22", "a": "г. Минск, пр. Победителей, 63В", "u": "https://kitmotor.by/"}, "amerika": {"n": "Amerika.by", "c": "autoimport", "p": "+375 29 633-28-28", "a": "г. Минск, ул. Большое Стиклево, 83", "u": "https://amerika.by/"}, "vinylstudio": {"n": "VinylStudio", "c": "detailing", "p": "+375 29 812-99-99", "a": "г. Минск, ул. Карла Либкнехта, 68А", "u": "https://vinylstudio.by/"}, "novuskuhni": {"n": "Novus Кухни", "c": "detailing", "p": "+375 29 102-56-56", "a": "г. Минск", "u": "https://novuskuhni.by/"}, "chestniypodbor": {"n": "Честный Подбор", "c": "autopodbor", "p": "+375 29 632-96-78", "a": "г. Минск", "u": "https://xn--90afcqthcencl1d0c.xn--90ais/"}, "mebelzakaz5": {"n": "МебельЗаказ5", "c": "kitchen", "p": "+375 44 716-10-20", "a": "г. Минск, ул. Берута, 3Б, оф. 909", "u": "https://mebelzakaz5.by/kuhni-pod-zakaz/"}, "autogroup": {"n": "AutoGroup", "c": "autoimport", "p": "+375 29 660-44-55", "a": "г. Минск, ул. Тимирязева, 72, оф. 7007", "u": "https://autogroup.by/"}, "usaauto": {"n": "USA-Auto.by", "c": "autoimport", "p": "+375 29 653-40-76", "a": "Минский р-н, Колодищи, ул. Парковая, 27", "u": "https://usa-auto.by/"}, "okleika": {"n": "Francev Detailing", "c": "detailing", "p": "+375 29 668-66-61", "a": "г. Минск, ул. Солтыса, 20", "u": "https://okleika.by/"}, "goodtrade": {"n": "ГудАвтоТрейд", "c": "autoimport", "p": "+375 25 910-93-22", "a": "г. Минск, пр-т Дзержинского, 115, оф. 465", "u": "https://goodtrade.by/"}, "pravimebel": {"n": "Pravi-Mebel", "c": "kitchen", "p": "+375 29 656-42-30", "a": "г. Минск", "u": "https://pravimebel.by/"}, "dihouse": {"n": "diHouse Ремонт", "c": "renovation", "p": "+375 44 580-73-75", "a": "г. Минск", "u": "https://dihouse.by/"}, "bycars": {"n": "ByCars", "c": "autoimport", "p": "+375 44 707-88-00", "a": "г. Минск, ул. Петруся Бровки, 30/5", "u": "https://bycars.by/"}, "medicaldent": {"n": "MedicalDent", "c": "dental", "p": "+375 44 555-15-55", "a": "г. Минск", "u": "https://medicaldent.by/"}, "forza": {"n": "Forza Детейлинг", "c": "detailing", "p": "+375 29 345-80-80", "a": "г. Минск, ул. Нововиленская, 27", "u": "https://forza.by/"}, "autopodbor1": {"n": "AutopodborMinsk", "c": "autopodbor", "p": "+375 33 355-55-35", "a": "г. Минск, ул. Германовская, 19, оф. 22", "u": "https://autopodborminsk.by/"}, "siviymerin": {"n": "Сивый Мерин Детейлинг", "c": "detailing", "p": "+375 29 600-00-00", "a": "г. Минск", "u": "https://siviy-merin.by/"}, "stozapad": {"n": "СТО Запад", "c": "detailing", "p": "+375293082020", "a": "г. Минск", "u": "https://stozapad.by/"}, "3dantista": {"n": "Три Дантиста", "c": "dental", "p": "+375 29 668-72-72", "a": "г. Минск", "u": "https://3dantista.by/"}, "newstyle": {"n": "New-Style Автотюнинг", "c": "detailing", "p": "+375 29 378-56-56", "a": "г. Минск, ул. Ольшевского, 1В", "u": "https://new-style.by/"}, "shkafmaster": {"n": "Шкаф-Мастер (Гиперион)", "c": "kitchen", "p": "+375 29 650-10-24", "a": "г. Минск", "u": "https://shkaf-master.by/"}, "avtopolirovka": {"n": "Avtopolirovka Minsk", "c": "detailing", "p": "+375 44 488-66-17", "a": "г. Минск", "u": "https://avtopolirovka.by/"}, "megamoika": {"n": "МегаМойка Детейлинг", "c": "detailing", "p": "+375 29 612-77-88", "a": "г. Минск, ул. Короля, 88/5", "u": "https://megamoika.by/okleyka-auto/"}, "detailingpoint": {"n": "Detailing Point", "c": "detailing", "p": "+375 29 888-39-99", "a": "г. Минск, Меньковский тракт, 47", "u": "https://detailing-point.by/"}, "podkluch": {"n": "Pod-Kluch.by", "c": "renovation", "p": "+375 33 669-87-66", "a": "г. Минск", "u": "https://pod-kluch.by/"}, "panfasad": {"n": "Пан-Фасад", "c": "kitchen", "p": "+375 33 673-55-55", "a": "г. Минск", "u": "https://panfasad.com/catalog/kykhni-na-zakaz/"}, "mebellite": {"n": "MebelLite", "c": "kitchen", "p": "+375 29 635-26-65", "a": "г. Минск", "u": "https://mebellite.by/kuhni"}, "autostyling": {"n": "Autostyling", "c": "detailing", "p": "+375 29 396-96-19", "a": "г. Минск, ул. Змитрока Бядули, 13 к.7", "u": "https://autostyling.by/"}, "imebel": {"n": "i-Mebel (ТЦ Спектр)", "c": "kitchen", "p": "+375 17 317-80-80", "a": "г. Минск, пр. Независимости, 179", "u": "https://i-mebel.by/"}, "creatdent": {"n": "КреативДент", "c": "dental", "p": "+375 29 899-70-02", "a": "г. Минск, ул. Кропоткина, 95", "u": "https://creatdent.by/"}, "zakazkuhni": {"n": "Заказ-Кухни Минск", "c": "detailing", "p": "+375 29 593-32-21", "a": "г. Минск", "u": "https://zakaz-kuhni-minsk.by/"}, "globalcar": {"n": "Global Car", "c": "autoimport", "p": "+375 44 579-14-88", "a": "г. Минск, ул. Толстого, 8, оф. 264", "u": "https://globalcar.by/"}, "minskzov": {"n": "Кухни ЗОВ Салон", "c": "kitchen", "p": "+375 29 888-64-68", "a": "г. Минск, ул. Янковского, 44", "u": "https://minsk-zov.by/"}, "nebomebel": {"n": "Небо Мебель", "c": "kitchen", "p": "+375 29 165-70-70", "a": "г. Минск, ул. Грушевская, 19", "u": "https://nebo.by/mebel-na-zakaz/kuhni/"}, "grosslend": {"n": "Grosslend Мебель", "c": "kitchen", "p": "+375 29 617-27-50", "a": "г. Минск", "u": "https://grosslend.by/kuhni"}, "kuhnivminske": {"n": "Кухни в Минске (ТЦ Ленинград)", "c": "kitchen", "p": "+375 29 578-77-77", "a": "г. Минск, ул. Ленина, 27, ТЦ Ленинград", "u": "https://kuhni-vminske.by/"}, "oklei": {"n": "Oklei.by", "c": "detailing", "p": "+375 44 555-17-17", "a": "г. Минск, ул. Бирюзова, 4/29", "u": "https://oklei.by/"}, "vsekuhni": {"n": "Все-Кухни.by", "c": "kitchen", "p": "+375 29 630-51-30", "a": "г. Минск", "u": "https://vse-kuhni.by/"}, "mholl": {"n": "Мебель Холл", "c": "kitchen", "p": "+375 44 794-11-11", "a": "г. Минск", "u": "https://mholl.by/"}, "emmetcars": {"n": "EmmetCars", "c": "autoimport", "p": "+375 29 111-12-34", "a": "г. Минск, пер. Северный, 17, оф. 3", "u": "https://emmetcars.by/"}};
+
+const NICHE_CONFIGS = {
+  detailing: {
+    badge: "🚘 Калькулятор детейлинга и бронеплёнки",
+    title: "Рассчитайте стоимость защиты кузова и детейлинга вашего авто за 45 секунд",
+    desc: "Выберите класс авто и нужный комплекс работ — покажем честную стоимость материалов + закрепим подарок при записи онлайн.",
+    currency: "BYN",
+    gift: "🎁 Подарок к расчёту: «Антидождь» передней полусферы или бронь под ручками бесплатно!",
+    steps: [
+      {
+        q: "1. Какой кузов у вашего автомобиля?",
+        opts: [
+          { label: "Седан / Купе / Хэтчбек", sub: "BMW 3/5, Geely Preface, Audi A4/A6", mult: 1.0 },
+          { label: "Кроссовер (Средний SUV)", sub: "Voyah Free, Zeekr 001, BMW X3/X5, Geely Monjaro", mult: 1.18 },
+          { label: "Крупный внедорожник / Минивэн", sub: "Li L7/L9, GLS, Land Cruiser, V-Class", mult: 1.35 },
+          { label: "Новый авто из салона (0 км)", sub: "Максимальная скидка без сложной полировки", mult: 1.08 }
+        ]
+      },
+      {
+        q: "2. Какая задача для вас сейчас приоритетна?",
+        opts: [
+          { label: "Оклейка зон риска полиуретаном (PPF)", sub: "Капот, бампер, крылья, фары, стойки, зеркала", base: 1950 },
+          { label: "Полная оклейка всего кузова плёнкой", sub: "100% броня полиуретаном или смена цвета", base: 5400 },
+          { label: "Восстановительная полировка + Керамика", sub: "Глубокий блеск и гидрофоб на 1.5–2 года", base: 980 },
+          { label: "Химчистка салона с разбором / защита кожи", sub: "Идеальная чистота, озонация и консервация", base: 520 }
+        ]
+      },
+      {
+        q: "3. Какой класс материалов рассматриваете?",
+        opts: [
+          { label: "Премиум полиуретан (Llumar / SunTek / Stek)", sub: "Гарантия до 10 лет, самозаживление царапин", add: 350 },
+          { label: "Оптимальный полиуретан (Spectroll / Nar / Quantum)", sub: "Лучшее соотношение цены и бронезащиты 195 мкм", add: 0 },
+          { label: "Пока не знаю — нужна рекомендация мастера", sub: "Покажем оба варианта вживую на образцах", add: 0 }
+        ]
+      },
+      {
+        q: "4. Когда планируете заезд в студию?",
+        opts: [
+          { label: "В ближайшие 2–4 дня", sub: "Проверим свободное окно в боксе", add: 0 },
+          { label: "На следующей неделе", sub: "Забронируем удобную дату заранее", add: 0 },
+          { label: "Жду выдачу авто / присматриваюсь к ценам", sub: "Зафиксируем текущую цену на 14 дней", add: 0 }
+        ]
+      }
+    ]
+  },
+  autoimport: {
+    badge: "🚢 Калькулятор пригона авто «под ключ» 2026",
+    title: "Узнайте полную стоимость авто из Китая, США или Кореи с доставкой в Минск",
+    desc: "Честный расчёт со всеми сборами, логистикой до СВХ и таможней РБ + подборка 3 реальных авто в ваш бюджет.",
+    currency: "$",
+    gift: "🎁 Бонус к расчёту: Бесплатная проверка истории авто (Carfax / отчёт эксперта) + чек-лист таможни 2026!",
+    steps: [
+      {
+        q: "1. Из какой страны рассматриваете пригон?",
+        opts: [
+          { label: "Китай (Электромобили и гибриды)", sub: "Zeekr, BYD, Li Auto, Voyah, Geely — доставка 25–35 дней", mult: 1.0 },
+          { label: "США / Канада (Аукционы Copart / IAAI)", sub: "Выгода до 30–35% от рынка РБ", mult: 1.0 },
+          { label: "Южная Корея / Европа без ДТП", sub: "Целые дизельные и бензиновые авто с родным пробегом", mult: 1.08 },
+          { label: "Сравнить Китай vs США под мой бюджет", sub: "Подберём самый ликвидный вариант", mult: 1.0 }
+        ]
+      },
+      {
+        q: "2. На какой итоговый бюджет «под ключ» в Минске ориентируетесь?",
+        opts: [
+          { label: "До $16 000 – $20 000", sub: "BYD Dolphin/Yuan Up, Chevrolet Equinox, VW ID.4", base: 17500 },
+          { label: "$20 000 – $30 000", sub: "BYD Song Plus, Zeekr X, BMW 3/X3, Audi Q5", base: 24800 },
+          { label: "$30 000 – $45 000", sub: "Zeekr 001, Li L6/L7, BMW X5, Mercedes GLE", base: 35500 },
+          { label: "От $45 000+ (Флагманский премиум)", sub: "Li L9, Zeekr 009, Porsche, BMW X7", base: 52000 }
+        ]
+      },
+      {
+        q: "3. Тип двигателя и растаможки?",
+        opts: [
+          { label: "Чистый электромобиль (BEV)", sub: "Минимальные таможенные издержки в РБ", add: 0 },
+          { label: "Последовательный гибрид / Бензин / Дизель", sub: "Проходной год (3–5 лет) или новое авто", add: 1200 },
+          { label: "Есть право на льготную растаможку (Указ №140)", sub: "Снижение таможенной пошлины на 50%", add: -1400 }
+        ]
+      },
+      {
+        q: "4. Нужен ли расчёт лизинга / кредита в BYN?",
+        opts: [
+          { label: "Оплата собственными средствами поэтапно", sub: "Официальный договор, оплата через банк по инвойсу", add: 0 },
+          { label: "Да, интересен лизинг / автокредит", sub: "Пришлём график платежей от партнёрских лизингов", add: 0 },
+          { label: "Сначала нужно продать свой текущий автомобиль", sub: "Оценим ваш авто в зачёт / комиссию", add: 0 }
+        ]
+      }
+    ]
+  },
+  kitchen: {
+    badge: "🏡 Онлайн-расчёт кухни и мебели от производителя",
+    title: "Рассчитайте стоимость вашей будущей кухни или шкафа по размерам за 45 секунд",
+    desc: "Прямое производство без салонных наценок: узнайте бюджет проекта + получите бесплатный 3D-дизайн в 2 цветовых решениях.",
+    currency: "BYN",
+    gift: "🎁 Подарок к расчёту: Бесплатный 3D-проект + система плавного закрывания ящиков или мойка в подарок!",
+    steps: [
+      {
+        q: "1. Какую планировку мебели рассчитываем?",
+        opts: [
+          { label: "Угловая кухня (Г-образная)", sub: "Самый функциональный вариант для квартир", mult: 1.15 },
+          { label: "Прямая кухня (Линейная)", sub: "Лаконичная геометрия от 2.0 до 4.5 м", mult: 1.0 },
+          { label: "П-образная кухня / Кухня с островом", sub: "Максимум рабочей зоны и хранения", mult: 1.38 },
+          { label: "Встроенный шкаф-купе / Гардеробная в потолок", sub: "Индивидуальное наполнение под нишу", mult: 0.78 }
+        ]
+      },
+      {
+        q: "2. Примерная общая длина по стенам?",
+        opts: [
+          { label: "Компактная (до 2.6 пог. м)", sub: "Студия или небольшая кухня", base: 4200 },
+          { label: "Стандартная (2.7 – 3.8 пог. м)", sub: "Оптимальный размер для 2–3 комн. квартиры", base: 6100 },
+          { label: "Просторная (3.9 – 5.2+ пог. м)", sub: "Евротрёшка, частный дом или антресоли до потолка", base: 8600 },
+          { label: "Точных замеров нет — нужен бесплатный замер", sub: "Дизайнер приедет с образцами фасадов", base: 5600 }
+        ]
+      },
+      {
+        q: "3. Какие фасады и фурнитуру предпочитаете?",
+        opts: [
+          { label: "Суперматовый пластик / Акрил / AGT", sub: "Защита от отпечатков пальцев, высокая износостойкость", add: 450 },
+          { label: "Крашеный МДФ + фрезеровка / Шпон", sub: "Любой оттенок по RAL/NCS, премиальный вид", add: 950 },
+          { label: "Практичный ЛДСП Egger (Австрия)", sub: "Стильные древесные и бетонные декоры без переплат", add: -550 }
+        ]
+      },
+      {
+        q: "4. Какой формат оплаты вам удобнее?",
+        opts: [
+          { label: "Поэтапная оплата по договору (предоплата от 30%)", sub: "Остаток после доставки и сборки", add: 0 },
+          { label: "Рассрочка 0% / Кредит Беларусбанка под 4%", sub: "Подготовим расчёт ежемесячного платежа", add: 0 },
+          { label: "Пока сравниваю цены производителей", sub: "Пришлём честную смету без скрытых доплат", add: 0 }
+        ]
+      }
+    ]
+  },
+  renovation: {
+    badge: "🛠 Сметный калькулятор ремонта квартир 2026",
+    title: "Рассчитайте точную смету и сроки ремонта вашей квартиры под ключ за 1 минуту",
+    desc: "Фиксированная цена в договоре, поэтапная оплата по актам выполненных работ и гарантия до 5 лет.",
+    currency: "BYN",
+    gift: "🎁 Бонус к расчёту: Профессиональная приёмка квартиры / тепловизионный осмотр + выезд сметчика за 0 BYN!",
+    steps: [
+      {
+        q: "1. Где находится объект ремонта?",
+        opts: [
+          { label: "Новостройка (бетон / черновая отделка)", sub: "Минск Мир, Левада, Новая Боровая, Северный Берег и др.", mult: 1.0 },
+          { label: "Вторичное жильё (нужен демонтаж)", sub: "Полное обновление электрики, сантехники и отделки", mult: 1.16 },
+          { label: "Частный дом / Коттедж / Таунхаус", sub: "Комплексная внутренняя инженерия и чистовая отделка", mult: 1.25 },
+          { label: "Коммерческое помещение / Офис", sub: "Сжатые сроки сдачи под открытие бизнеса", mult: 1.05 }
+        ]
+      },
+      {
+        q: "2. Общая площадь помещения по полу?",
+        opts: [
+          { label: "Студия / 1-комнатная (28 – 44 м²)", sub: "Срок реализации ~5–7 недель", base: 14500 },
+          { label: "Евродвушка / 2-комнатная (45 – 68 м²)", sub: "Срок реализации ~7–9 недель", base: 22900 },
+          { label: "3-комнатная квартира (69 – 95 м²)", sub: "Срок реализации ~9–12 недель", base: 32500 },
+          { label: "Более 95 м² / Двухуровневая / Дом", sub: "Индивидуальный график инженерных бригад", base: 46000 }
+        ]
+      },
+      {
+        q: "3. Есть ли у вас готовый дизайн-проект?",
+        opts: [
+          { label: "Да, проект на руках — нужно точно осметить", sub: "Сделаем построчную смету работ и черновых материалов", add: 0 },
+          { label: "Нет, нужен технический / полный дизайн-проект", sub: "Разработаем планировку, розетки, свет и 3D", add: 1800 },
+          { label: "Делаем понятный современный ремонт без дизайнера", sub: "Поможем с раскладкой электрики и подбором чистовых", add: 0 }
+        ]
+      },
+      {
+        q: "4. Когда планируете приступить к работам?",
+        opts: [
+          { label: "Ключи уже получены — готов начинать", sub: "Бесплатный замер и смета за 24 часа", add: 0 },
+          { label: "Сдача дома в ближайшие 1–2 месяца", sub: "Забронируем бригаду и зафиксируем прайс", add: 0 },
+          { label: "Прицениваюсь к бюджету заранее", sub: "Отправим реальные примеры смет по вашей площади", add: 0 }
+        ]
+      }
+    ]
+  },
+  autopodbor: {
+    badge: "🔍 Калькулятор проверки и подбора авто",
+    title: "Узнайте стоимость автоподбора и защитите себя от скрытого ДТП и скрученного пробега",
+    desc: "В 85% случаев аргументированный торг нашего эксперта у капота полностью окупает стоимость подбора!",
+    currency: "BYN",
+    gift: "🎁 Бонус к заявке: Бесплатная предварительная проверка 2 ваших объявлений по закрытым базам до выезда!",
+    steps: [
+      {
+        q: "1. Какой формат помощи вам нужен?",
+        opts: [
+          { label: "Подбор автомобиля «под ключ» с гарантией", sub: "Ищем лучший живой экземпляр на рынке до результата", base: 1150 },
+          { label: "Разовый выездной осмотр выбранного авто", sub: "Толщиномер, эндоскопия, компьютерная диагностика блоков, фотоотчёт", base: 160 },
+          { label: "Эксперт на целый день (осмотр 4–6 машин)", sub: "Передвигаемся на авто эксперта по Минску", base: 490 },
+          { label: "Проверка нового / пригнанного авто перед покупкой", sub: "Сверка окрасов, таможни и электронных блоков", base: 190 }
+        ]
+      },
+      {
+        q: "2. В каком бюджете рассматриваете покупку авто?",
+        opts: [
+          { label: "До $12 000", sub: "Тщательная проверка кузова и ресурса агрегатов", mult: 0.92 },
+          { label: "$12 000 – $22 000", sub: "Самый активный сегмент рынка РБ", mult: 1.0 },
+          { label: "$22 000 – $40 000", sub: "Глубокая профильная диагностика дилерским сканером", mult: 1.15 },
+          { label: "Свыше $40 000 (Премиум / Электро)", sub: "Расширенная проверка батареи SOH / пневмы / эндоскопия", mult: 1.28 }
+        ]
+      },
+      {
+        q: "3. Насколько вы уже определились с маркой и моделью?",
+        opts: [
+          { label: "Точно знаю марку/модель (есть ссылки с av.by)", sub: "Сразу проверим актуальные объявления", add: 0 },
+          { label: "Выбираю между 2–3 моделями — нужен совет", sub: "Подскажем, что ликвиднее и надёжнее по мотору/КПП", add: 0 }
+        ]
+      },
+      {
+        q: "4. Когда планируете покупку?",
+        opts: [
+          { label: "Срочно — деньги на руках (на этой неделе)", sub: "Выезд эксперта возможен уже сегодня", add: 0 },
+          { label: "В течение 2–4 недель", sub: "Начнём мониторинг свежих объявлений до перекупов", add: 0 }
+        ]
+      }
+    ]
+  },
+  dental: {
+    badge: "🦷 Онлайн-расчёт плана стоматологического лечения",
+    title: "Рассчитайте ориентировочную стоимость имплантации, виниров или лечения за 45 секунд",
+    desc: "Современная цифровая стоматология без боли, прозрачный план лечения без скрытых доплат.",
+    currency: "BYN",
+    gift: "🎁 Бонус при онлайн-записи: Первичная консультация профильного врача + разбор 3D-снимка КТ с фиксацией плана!",
+    steps: [
+      {
+        q: "1. Какое направление вас интересует?",
+        opts: [
+          { label: "Имплантация зубов «под ключ»", sub: "Установка имплантата с пожизненной гарантией производителя", base: 1450 },
+          { label: "Керамические виниры E-max / Коронки цирконий", sub: "Идеальная эстетика улыбки и естественная прозрачность", base: 1180 },
+          { label: "Комплексное лечение кариеса / каналов под микроскопом", sub: "Сохранение сложных зубов без удаления", base: 290 },
+          { label: "Профгигиена AirFlow + Отбеливание / Брекеты", sub: "Бережное осветление и выравнивание прикуса", base: 240 }
+        ]
+      },
+      {
+        q: "2. Объём восстановления / количество зубов?",
+        opts: [
+          { label: "1 зуб / точечная консультация", sub: "Локальное решение за 1–2 визита", mult: 1.0 },
+          { label: "2 – 4 единицы", sub: "Комплексный план с поэтапной оплатой", mult: 2.6 },
+          { label: "Зона улыбки / Полное восстановление (All-on-4 / 6+)", sub: "Цифровое моделирование будущей улыбки", mult: 5.2 },
+          { label: "Нужен осмотр врача для точного подсчёта", sub: "Составим 2–3 варианта плана под разный бюджет", mult: 1.0 }
+        ]
+      },
+      {
+        q: "3. Есть ли на руках свежий 3D-снимок (КТ) челюсти?",
+        opts: [
+          { label: "Да, снимок уже есть", sub: "Врач сразу составит финальную смету на приёме", add: 0 },
+          { label: "Нет, подскажете где сделать / на месте", sub: "Выпишем направление без очередей", add: 0 }
+        ]
+      },
+      {
+        q: "4. Какое время визита вам удобнее?",
+        opts: [
+          { label: "Будний день (утро или день)", sub: "Подберём ближайшее свободное окно", add: 0 },
+          { label: "Вечер после 18:00 или Выходной", sub: "Приоритетная бронь удобного времени", add: 0 }
+        ]
+      }
+    ]
+  }
+};
+
+// Parse URL params
+const params = new URLSearchParams(window.location.search);
+const clientSlug = (params.get("client") || "okleika").toLowerCase();
+const preset = CLIENTS[clientSlug] || {
+  n: params.get("name") || "Francev Detailing",
+  c: params.get("niche") || "detailing",
+  p: params.get("phone") || "+375 29 668-66-61",
+  a: params.get("addr") || "г. Минск"
+};
+
+const companyName = params.get("name") || preset.n;
+const nicheKey = NICHE_CONFIGS[params.get("niche") || preset.c] ? (params.get("niche") || preset.c) : "detailing";
+const companyPhone = params.get("phone") || preset.p || "+375 29 000-00-00";
+const companyAddr = params.get("addr") || preset.a || "г. Минск";
+const customCurr = params.get("curr") || NICHE_CONFIGS[nicheKey].currency;
+const webhookUrl = params.get("webhook") || "";
+
+const cfg = NICHE_CONFIGS[nicheKey];
+
+document.title = companyName + " — Онлайн-расчёт стоимости";
+document.getElementById("brandName").textContent = companyName;
+document.getElementById("brandInitial").textContent = companyName.trim().charAt(0).toUpperCase();
+document.getElementById("brandAddr").textContent = companyAddr + " • Расчёт 24/7";
+document.getElementById("brandPhone").textContent = companyPhone;
+document.getElementById("brandPhone").href = "tel:" + companyPhone.replace(/[^+\d]/g, "");
+document.getElementById("ownerBannerText").textContent = "Персональное демо для «" + companyName + "»";
+document.getElementById("tgCompTitle").textContent = companyName;
+document.getElementById("nicheBadge").textContent = cfg.badge;
+document.getElementById("heroTitle").textContent = cfg.title;
+document.getElementById("heroDesc").textContent = cfg.desc;
+
+let curStep = 0;
+const selections = [0, 0, 0, 0];
+let chosenMessenger = "Telegram";
+
+function computeEstimate() {
+  let base = 1000, mult = 1.0, add = 0;
+  cfg.steps.forEach((st, idx) => {
+    const opt = st.opts[selections[idx]] || st.opts[0];
+    if (typeof opt.base === "number") base = opt.base;
+    if (typeof opt.mult === "number") mult *= opt.mult;
+    if (typeof opt.add === "number") add += opt.add;
+  });
+  const mid = Math.max(120, Math.round((base * mult + add) / 10) * 10);
+  const low = Math.round((mid * 0.93) / 10) * 10;
+  const high = Math.round((mid * 1.08) / 10) * 10;
+  if (customCurr === "$") return "$" + low.toLocaleString("ru-RU") + " – $" + high.toLocaleString("ru-RU");
+  return low.toLocaleString("ru-RU") + " – " + high.toLocaleString("ru-RU") + " " + customCurr;
+}
+
+function renderQuiz() {
+  const total = cfg.steps.length;
+  const pct = curStep < total ? Math.round(((curStep + 1) / total) * 85) : 100;
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("stepCounter").textContent = curStep < total ? ("Шаг " + (curStep + 1) + " из " + total) : "Расчёт готов!";
+  document.getElementById("discountHint").textContent = curStep < total ? ("🎁 Бонус разблокирован на " + pct + "%") : "✅ Подарок закреплён за вашим расчётом!";
+
+  const root = document.getElementById("quizBody");
+  if (curStep < total) {
+    const st = cfg.steps[curStep];
+    let html = '<div class="step-q">' + st.q + '</div><div class="options-grid">';
+    st.opts.forEach((o, idx) => {
+      const act = selections[curStep] === idx ? "active" : "";
+      html += '<button class="opt-btn ' + act + '" onclick="pickOpt(' + idx + ')">' +
+        '<div><div class="opt-main">' + o.label + '</div><div class="opt-sub">' + o.sub + '</div></div>' +
+        '<div class="opt-check">' + (act ? "✓" : "") + '</div></button>';
+    });
+    html += '</div><div class="nav-row">';
+    if (curStep > 0) html += '<button class="btn-sec" onclick="prevStep()">← Назад</button>';
+    html += '<button class="btn-pri" onclick="nextStep()">' + (curStep === total - 1 ? "Показать точную стоимость →" : "Далее →") + '</button></div>';
+    root.innerHTML = html;
+  } else {
+    const est = computeEstimate();
+    root.innerHTML =
+      '<div class="result-box">' +
+        '<div class="est-label">Предварительная смета для ваших параметров (' + companyName + '):</div>' +
+        '<div class="est-price">' + est + '</div>' +
+        '<div style="font-size:13px;color:#cbd5e1;">Расчёт сформирован автоматически на основе выбранной комплектации.</div>' +
+      '</div>' +
+      '<div class="gift-banner">' + cfg.gift + '</div>' +
+      '<div class="step-q" style="font-size:15.5px;">Куда отправить детальную смету и закрепить бонус?</div>' +
+      '<div class="msg-tabs">' +
+        ['Telegram', 'Viber', 'WhatsApp / Звонок'].map(m =>
+          '<button type="button" class="msg-tab ' + (chosenMessenger===m?'active':'') + '" onclick="setMsg(\''+m+'\')">' + m + '</button>'
+        ).join('') +
+      '</div>' +
+      '<input class="inp" id="leadName" placeholder="Ваше имя (например, Александр)">' +
+      '<input class="inp" id="leadPhone" type="tel" placeholder="+375 (29) ___-__-__">' +
+      '<div class="nav-row">' +
+        '<button class="btn-sec" onclick="prevStep()">← Изменить</button>' +
+        '<button class="btn-pri" onclick="submitLead()">Зафиксировать расчёт и бонус ✓</button>' +
+      '</div>';
+  }
+}
+
+function pickOpt(idx) {
+  selections[curStep] = idx;
+  renderQuiz();
+  setTimeout(() => { if (curStep < cfg.steps.length) nextStep(); }, 220);
+}
+function nextStep() { curStep++; renderQuiz(); }
+function prevStep() { if (curStep > 0) { curStep--; renderQuiz(); } }
+function setMsg(m) { chosenMessenger = m; renderQuiz(); }
+
+function buildSummaryLines() {
+  return cfg.steps.map((st, idx) => (st.opts[selections[idx]] || st.opts[0]).label);
+}
+
+function openOwnerPreview(customName, customPhone) {
+  const est = computeEstimate();
+  const lines = buildSummaryLines();
+  const cName = customName || (document.getElementById("leadName")?.value || "Андрей (пример клиента с сайта)");
+  const cPhone = customPhone || (document.getElementById("leadPhone")?.value || "+375 (29) 645-18-92");
+  document.getElementById("tgBubbleContent").innerHTML =
+    "🔥 <b>НОВАЯ ЗАЯВКА — " + companyName + "</b><br>" +
+    "━━━━━━━━━━━━━━━━━━<br>" +
+    "👤 <b>Клиент:</b> " + cName + "<br>" +
+    "📞 <b>Телефон:</b> <code>" + cPhone + "</code><br>" +
+    "💬 <b>Мессенджер:</b> " + chosenMessenger + "<br>" +
+    "💰 <b>Расчёт калькулятора:</b> <b>" + est + "</b><br><br>" +
+    "📋 <b>Ответы клиента:</b><br>• " + lines.join("<br>• ") + "<br>" +
+    "━━━━━━━━━━━━━━━━━━<br>" +
+    "⏱ <i>Доставлено мгновенно ботом без потерь заявок</i>";
+  document.getElementById("tgModal").classList.add("open");
+}
+function closeOwnerPreview() {
+  document.getElementById("tgModal").classList.remove("open");
+}
+
+async function submitLead() {
+  const nameVal = (document.getElementById("leadName")?.value || "").trim() || "Клиент с калькулятора";
+  const phoneVal = (document.getElementById("leadPhone")?.value || "").trim();
+  if (phoneVal.length < 7) {
+    alert("Пожалуйста, укажите контактный номер телефона для отправки расчёта.");
+    return;
+  }
+  const payload = {
+    slug: clientSlug,
+    company: companyName,
+    niche: cfg.badge,
+    name: nameVal,
+    phone: phoneVal,
+    messenger: chosenMessenger,
+    estimate: computeEstimate(),
+    answers: buildSummaryLines()
+  };
+  if (webhookUrl) {
+    try {
+      await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {}
+  }
+  document.getElementById("quizBody").innerHTML =
+    '<div style="text-align:center;padding:18px 8px;">' +
+      '<div style="font-size:44px;margin-bottom:10px;">✅</div>' +
+      '<h2 style="margin-bottom:8px;">Расчёт и подарок закреплены за номером ' + phoneVal + '!</h2>' +
+      '<p style="color:#94a3b8;font-size:14px;margin-bottom:16px;">Специалист «' + companyName + '» уже получил выбранные вами параметры в Telegram и отправит точную смету в ' + chosenMessenger + '.</p>' +
+      '<button class="owner-btn" style="padding:11px 18px;font-size:13px;" onclick="openOwnerPreview(\''+nameVal.replace(/'/g,"")+'\', \''+phoneVal.replace(/'/g,"")+'\')">👁 Посмотреть, какую карточку сейчас получил руководитель в Telegram</button>' +
+    '</div>';
+}
+
+renderQuiz();
+</script>
+</body>
+</html>
