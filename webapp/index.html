@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Боевой Командный Центр: $100 → $1,000</title>
+<style>
+  :root {
+    --bg: #060913;
+    --panel: #0f172a;
+    --panel2: #16213a;
+    --border: rgba(255,255,255,0.09);
+    --green: #10b981;
+    --blue: #3b82f6;
+    --amber: #f59e0b;
+    --rose: #f43f5e;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; }
+  body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 60px; }
+
+  .topbar {
+    background: rgba(15,23,42,0.94); border-bottom: 1px solid var(--border);
+    padding: 16px 22px; position: sticky; top: 0; z-index: 40; backdrop-filter: blur(12px);
+  }
+  .topbar-inner { max-width: 1360px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .title-block h1 { font-size: 20px; font-weight: 900; letter-spacing: -0.3px; }
+  .title-block p { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+
+  .kpi-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .kpi-chip {
+    background: var(--panel2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 8px 14px; min-width: 135px;
+  }
+  .kpi-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+  .kpi-val { font-size: 18px; font-weight: 900; color: #34d399; margin-top: 2px; }
+
+  .container { max-width: 1360px; margin: 20px auto 0; padding: 0 18px; }
+
+  .goal-bar-card {
+    background: linear-gradient(90deg, rgba(16,185,129,0.12), rgba(59,130,246,0.10));
+    border: 1px solid rgba(16,185,129,0.3); border-radius: 16px; padding: 14px 18px;
+    margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .goal-track { flex: 1; min-width: 220px; height: 11px; background: rgba(0,0,0,0.45); border-radius: 99px; overflow: hidden; border: 1px solid var(--border); }
+  .goal-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #10b981, #34d399, #fbbf24); transition: width .35s ease; }
+
+  .host-box {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: 100%;
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.07);
+    font-size: 12.5px; color: #cbd5e1;
+  }
+  .host-inp {
+    flex: 1; min-width: 260px; background: #070b14; border: 1px solid var(--border);
+    color: #fff; padding: 7px 11px; border-radius: 8px; font-size: 12.5px;
+  }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .tab-btn {
+    background: var(--panel); color: var(--muted); border: 1px solid var(--border);
+    padding: 11px 16px; border-radius: 12px; font-size: 13.5px; font-weight: 800; cursor: pointer; transition: all .15s;
+  }
+  .tab-btn:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
+  .tab-btn.active {
+    background: linear-gradient(135deg, #10b981, #059669); color: #03150e; border-color: transparent;
+    box-shadow: 0 8px 20px rgba(16,185,129,0.3);
+  }
+
+  .filters-bar {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 12px 14px; margin-bottom: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .f-inp, .f-sel {
+    background: #070b14; color: #fff; border: 1px solid var(--border);
+    padding: 9px 12px; border-radius: 9px; font-size: 13px;
+  }
+  .f-inp { flex: 1; min-width: 200px; }
+
+  .leads-grid { display: grid; grid-template-columns: 1fr; gap: 11px; }
+  .lead-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 15px;
+    padding: 15px 17px; display: grid; grid-template-columns: 1.5fr 1.2fr 1.6fr; gap: 14px; align-items: center;
+  }
+  @media (max-width: 960px) { .lead-card { grid-template-columns: 1fr; } }
+  .lead-card.paid { border-color: #10b981; background: linear-gradient(90deg, rgba(16,185,129,0.10), var(--panel)); }
+  .lead-card.sent { border-color: rgba(59,130,246,0.45); }
+
+  .l-title { font-size: 16px; font-weight: 850; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 700; }
+  .b-niche { background: rgba(59,130,246,0.16); color: #93c5fd; }
+  .b-slow { background: rgba(244,63,94,0.16); color: #fda4af; }
+  .b-tg { background: rgba(16,185,129,0.16); color: #6ee7b7; }
+  .l-meta { font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.45; }
+  .l-pain { font-size: 12px; color: #fcd34d; margin-top: 6px; font-weight: 600; }
+
+  .contacts-col { display: flex; flex-wrap: wrap; gap: 6px; }
+  .c-link {
+    text-decoration: none; font-size: 12px; font-weight: 700; padding: 6px 10px;
+    border-radius: 8px; border: 1px solid var(--border); color: #e2e8f0; background: rgba(255,255,255,0.04);
+  }
+  .c-link.tg { background: rgba(42,171,238,0.16); border-color: rgba(42,171,238,0.4); color: #7dd3fc; }
+
+  .actions-col { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; align-items: center; }
+  @media (max-width: 960px) { .actions-col { justify-content: flex-start; } }
+  .act-btn {
+    border: none; padding: 9px 12px; border-radius: 9px; font-size: 12.5px; font-weight: 800;
+    cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+  }
+  .btn-demo { background: rgba(16,185,129,0.16); color: #34d399; border: 1px solid rgba(16,185,129,0.4); }
+  .btn-copy { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; }
+  .status-sel {
+    background: #070b14; color: #fff; border: 1px solid var(--border);
+    padding: 8px 9px; border-radius: 9px; font-size: 12px; font-weight: 700;
+  }
+
+  .panel-box {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+    padding: 20px; margin-bottom: 16px;
+  }
+  .panel-box h2 { font-size: 18px; margin-bottom: 10px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 820px) { .grid-2 { grid-template-columns: 1fr; } }
+  .code-area {
+    width: 100%; min-height: 110px; background: #050811; color: #a7f3d0;
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-family: monospace; font-size: 12.5px; margin-top: 8px;
+  }
+
+  .toast {
+    position: fixed; bottom: 22px; right: 22px; background: #10b981; color: #04130d;
+    padding: 12px 18px; border-radius: 12px; font-weight: 900; font-size: 13.5px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5); display: none; z-index: 200;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="title-block">
+      <h1>⚡ БОЕВОЙ КОМАНДНЫЙ ЦЕНТР: $100 → $1,000</h1>
+      <p>4 проверенных двигателя без вложений: 55 B2B Троянских Демо • 65 Живых TG-заказов • Kwork Комбайн • USDC Крипто-Баунти</p>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-chip">
+        <div class="kpi-lbl">Отправлено офферов</div>
+        <div class="kpi-val" id="kpiSent" style="color:#60a5fa">0</div>
+      </div>
+      <div class="kpi-chip">
+        <div class="kpi-lbl">Закрыто сделок</div>
+        <div class="kpi-val" id="kpiPaidCnt" style="color:#fbbf24">0</div>
+      </div>
+      <div class="kpi-chip">
+        <div class="kpi-lbl">Заработано ($)</div>
+        <div class="kpi-val" id="kpiRevenue">$0 / $1,000</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="goal-bar-card">
+    <div style="font-size:13.5px;font-weight:800;">🎯 Прогресс до цели $1,000 (1 сделка B2B = ~$110 / 350 BYN):</div>
+    <div class="goal-track"><div class="goal-fill" id="goalFill"></div></div>
+    <div class="host-box">
+      <span>🌐 <b>Твой публичный URL для отправки клиентам</b> (залей <code>demo.html</code> за 30 сек бесплатно на <a href="https://app.netlify.com/drop" target="_blank" style="color:#34d399">Netlify Drop</a> или Cloudflare Pages и вставь домен сюда):</span>
+      <input class="host-inp" id="publicBaseUrl" value="" placeholder="Оставь пустым для локального теста или вставь https://твоё-имя.netlify.app/demo.html" oninput="saveBaseUrl()">
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('b2b', this)">🎯 1. Снайпер B2B Минск (55 готовых Демо)</button>
+    <button class="tab-btn" onclick="switchTab('builder', this)">⚡ 2. Генератор Демо за 10 сек (Весь мир)</button>
+    <button class="tab-btn" onclick="switchTab('tggigs', this)">🔥 3. Живые Заказы Telegram (65 прямых контактов)</button>
+    <button class="tab-btn" onclick="switchTab('bounties', this)">💎 4. USDC Баунти + Kwork + Закрытие возражений</button>
+  </div>
+
+  <!-- TAB 1: B2B MINSK SNIPER -->
+  <div id="tab-b2b">
+    <div class="filters-bar">
+      <input class="f-inp" id="b2bSearch" placeholder="🔍 Поиск по названию, сайту, телефону или адресу..." oninput="renderB2B()">
+      <select class="f-sel" id="b2bNiche" onchange="renderB2B()">
+        <option value="all">Все 6 денежных ниш (55 компаний)</option>
+        <option value="detailing">🚘 Детейлинг и оклейка плёнкой</option>
+        <option value="autoimport">🚢 Пригон авто США / Китай</option>
+        <option value="kitchen">🏡 Кухни и шкафы на заказ</option>
+        <option value="renovation">🛠 Ремонт квартир под ключ</option>
+        <option value="autopodbor">🔍 Автоподбор</option>
+        <option value="dental">🦷 Частная стоматология</option>
+      </select>
+      <label style="font-size:12.5px;display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="checkbox" id="onlyTgChk" onchange="renderB2B()"> Только с прямым Telegram (26 шт.)
+      </label>
+    </div>
+    <div class="leads-grid" id="b2bList"></div>
+  </div>
+
+  <!-- TAB 2: 10-SEC DEMO GENERATOR -->
+  <div id="tab-builder" style="display:none;">
+    <div class="panel-box">
+      <h2>⚡ Генератор персонального «Троянского Демо» под ЛЮБОЙ бизнес мира за 10 секунд</h2>
+      <p style="color:var(--muted);font-size:13.5px;margin-bottom:16px;">Хочешь масштабироваться на Москву, Алматы, Варшаву, Дубай или другие студии Минска? Заполни 4 поля — получишь готовую именную ссылку, скрипт первого сообщения и код вставки на сайт клиента!</p>
+      <div class="grid-2">
+        <div>
+          <label style="font-size:12px;color:var(--muted);">Название компании клиента</label>
+          <input class="f-inp" style="width:100%;margin:5px 0 12px;" id="genName" value="BlackStar Detailing" oninput="updateGenerator()">
+          <label style="font-size:12px;color:var(--muted);">Ниша калькулятора</label>
+          <select class="f-sel" style="width:100%;margin:5px 0 12px;" id="genNiche" onchange="updateGenerator()">
+            <option value="detailing">🚘 Детейлинг и оклейка плёнкой</option>
+            <option value="autoimport">🚢 Пригон авто из Китая / США</option>
+            <option value="kitchen">🏡 Кухни и корпусная мебель</option>
+            <option value="renovation">🛠 Ремонт квартир и домов</option>
+            <option value="autopodbor">🔍 Автоподбор и диагностика</option>
+            <option value="dental">🦷 Стоматология (импланты / виниры)</option>
+          </select>
+          <label style="font-size:12px;color:var(--muted);">Телефон клиента</label>
+          <input class="f-inp" style="width:100%;margin:5px 0 12px;" id="genPhone" value="+375 29 183-13-13" oninput="updateGenerator()">
+          <div style="display:flex;gap:10px;">
+            <div style="flex:2;">
+              <label style="font-size:12px;color:var(--muted);">Город и адрес</label>
+              <input class="f-inp" style="width:100%;margin-top:5px;" id="genAddr" value="г. Минск, пр. Победителей, 84" oninput="updateGenerator()">
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:12px;color:var(--muted);">Валюта</label>
+              <select class="f-sel" style="width:100%;margin-top:5px;" id="genCurr" onchange="updateGenerator()">
+                <option value="BYN">BYN</option>
+                <option value="₽">₽ (RUB)</option>
+                <option value="$">$ (USD)</option>
+                <option value="₸">₸ (KZT)</option>
+                <option value="€">€ (EUR)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#34d399;font-weight:700;">1. Готовая персональная ссылка для клиента:</label>
+          <textarea class="code-area" style="min-height:62px;" id="genLinkOut" readonly></textarea>
+          <div style="display:flex;gap:8px;margin:8px 0 14px;">
+            <a class="act-btn btn-demo" id="genOpenBtn" target="_blank" href="#">🚀 Открыть это Демо</a>
+            <button class="act-btn btn-copy" onclick="copyText(document.getElementById('genPitchOut').value)">📋 Скопировать текст сообщения</button>
+          </div>
+          <label style="font-size:12px;color:#60a5fa;font-weight:700;">2. Готовое сообщение владельцу в Telegram / Viber / Direct:</label>
+          <textarea class="code-area" style="min-height:135px;" id="genPitchOut"></textarea>
+          <label style="font-size:12px;color:#fbbf24;font-weight:700;display:block;margin-top:10px;">3. Код установки виджета на сайт клиента за 30 секунд (после согласия):</label>
+          <textarea class="code-area" style="min-height:56px;" id="genWidgetOut" readonly></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: LIVE TG GIGS OCT 2026 -->
+  <div id="tab-tggigs" style="display:none;">
+    <div class="filters-bar">
+      <input class="f-inp" id="tgSearch" placeholder="🔍 Фильтр по тексту задачи или @username..." oninput="renderTgGigs()">
+      <select class="f-sel" id="tgCat" onchange="renderTgGigs()">
+        <option value="all">Все категории (65 свежих заказов 20–25 окт 2026)</option>
+        <option value="web_bot">💻 Сайты / Лендинги / Боты / UI-UX</option>
+        <option value="ai_design">🎨 ИИ-Дизайн / Карточки WB / Логотипы</option>
+        <option value="ai_video">🎬 ИИ-Видео / Reels / Озвучка и монтаж</option>
+        <option value="content">✍️ Сценарии / Контент / Продюсирование</option>
+      </select>
+    </div>
+    <div class="leads-grid" id="tgGigsList"></div>
+  </div>
+
+  <!-- TAB 4: USDC BOUNTIES + KWORK + OBJECTIONS -->
+  <div id="tab-bounties" style="display:none;">
+    <div class="grid-2">
+      <div class="panel-box">
+        <h2>💎 Крипто-Баунти Superteam Earn (USDC на Solana)</h2>
+        <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px;">Мы уже зарегистрировали твоего персонального агента через официальный API Superteam Earn и подготовили готовые решения:</p>
+        <div style="background:#070b14;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:12.5px;line-height:1.6;margin-bottom:12px;">
+          • <b>Agent Username:</b> <code>apexsolanabuilder-digital-54</code><br>
+          • <b>Claim Link (привязка твоего кошелька):</b> <a href="https://superteam.fun/earn/claim/7C9F12CEB4C1183F6A17EBCD" target="_blank" style="color:#34d399">https://superteam.fun/earn/claim/7C9F12CEB4C1183F6A17EBCD</a><br>
+          • <b>Готовый проект №1 ($2,500 USDC пул, всего 5 заявок на 5 призовых мест, до 5 ноября):</b> <code>03_crypto_bounties_usdc/solana_block_scheduler/</code> — Docker-стенд + реальные замеры 7 валидаторов Solana Mainnet после апгрейда Alpenglow!<br>
+          • <b>Готовые треды №2 и №3 (по $500 USDC каждый, Global, 0$ затрат):</b> <code>worm.wtf</code> (с готовой инфографикой!) + <code>$CHIMP</code> — лежат в <code>READY_BOUNTY_SUBMISSIONS.md</code>!
+        </div>
+      </div>
+
+      <div class="panel-box">
+        <h2>🛡 Шпаргалка закрытия ЛЮБЫХ возражений за 10 секунд</h2>
+        <div style="font-size:12.5px;line-height:1.55;color:#e2e8f0;display:flex;flex-direction:column;gap:10px;">
+          <div style="background:#070b14;padding:10px 12px;border-radius:10px;border-left:3px solid #10b981;">
+            <b>«А сколько стоит? / Нам дорого»</b><br>
+            👉 «Под ключ 350 BYN ($100) разово, БЕЗ ежемесячной абонплаты (обычные квизы типа Marquiz берут по 50–90 руб каждый месяц вечно). У вас с 1 единственной заявки на плёнку/кухню калькулятор окупается в 5–10 раз. Плюс оплата строго ПОСЛЕ того, как поставим и проверим на вашем телефоне».
+          </div>
+          <div style="background:#070b14;padding:10px 12px;border-radius:10px;border-left:3px solid #3b82f6;">
+            <b>«У нас уже есть форма "перезвоните мне" на сайте»</b><br>
+            👉 «Именно поэтому я и собрал калькулятор: в 2026 году 75% людей с мобильного боятся оставлять номер в слепую форму, чтобы им не названивали менеджеры. А когда человек за 4 клика видит вилку цены в BYN + фиксирует подарок в Telegram — конверсия рекламного трафика вырастает в 2.5 раза».
+          </div>
+          <div style="background:#070b14;padding:10px 12px;border-radius:10px;border-left:3px solid #f59e0b;">
+            <b>«Сложно ставить, не хочу трогать сайт / давать доступы»</b><br>
+            👉 «Доступы к админке мне даже не нужны! Мы либо вешаем прямую ссылку в шапку вашего Instagram и рекламу уже через 5 минут, либо ваш техспец вставляет 1 строчку кода плавающей кнопки. Давайте прямо сейчас пришлю тестовую заявку в ваш Telegram — займёт 30 секунд».
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ Скопировано в буфер обмена!</div>
+
+<script>
+const LEADS = [{"slug": "podboravtobel", "name": "Подбор-Авто Минск", "niche": "Выездная диагностика и подбор авто", "ncode": "autopodbor", "url": "https://xn----7sbdbcm3eacgpbr.xn--90ais/", "phone": "+375 44 790-84-85", "email": "Jurijmen44@gmail.com", "addr": "г. Минск", "ms": 4728, "status_http": 200, "has_calc": false, "tg": "https://t.me/yury_autopodbor_minsk", "insta": "https://www.instagram.com/reel", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "detailingpro", "name": "Detailing-PRO", "niche": "Детейлинг и реставрация кожи", "ncode": "detailing", "url": "https://detailing-pro.by/", "phone": "+375 29 125-41-42", "email": "info@detailing-pro.by", "addr": "г. Минск, пр. Победителей, 84 (ArenaCity)", "ms": 3553, "status_http": 200, "has_calc": false, "tg": "https://t.me/detailingproby", "insta": "https://www.instagram.com/detailingpro_minsk", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "4kolesa", "name": "4 Колеса Импорт", "niche": "Пригон авто из Китая и Европы", "ncode": "autoimport", "url": "https://4kolesa.by/prignati-avto/", "phone": "+375 44 788-04-04", "email": "info@4kolesa.by", "addr": "г. Минск, пр. Победителей, 111В", "ms": 2825, "status_http": 200, "has_calc": false, "tg": "https://t.me/share", "insta": "https://www.instagram.com/4kolesa.by", "pain": "Нет интерактивного онлайн-калькулятора цены под параметры клиента"}, {"slug": "dasdrive", "name": "DAS DRIVE", "niche": "Пригон электромобилей из Китая и США", "ncode": "autoimport", "url": "https://dasdrive.by/import-china", "phone": "+375 44 570-96-56", "email": "das.drive.club@gmail.com", "addr": "г. Минск", "ms": 2031, "status_http": 200, "has_calc": false, "tg": "https://t.me/das_drive2", "insta": "https://www.instagram.com/dasdrive_", "pain": "Нет интерактивного онлайн-калькулятора цены под параметры клиента"}, {"slug": "smiledetailing", "name": "Smile Detailing", "niche": "Детейлинг-центр", "ncode": "detailing", "url": "https://smiledetailing.by/", "phone": "+375 44 576-23-44", "email": "syncmaster940bf@yandex.by", "addr": "г. Минск", "ms": 1808, "status_http": 200, "has_calc": false, "tg": "https://t.me/mike_dudarchik", "insta": "https://www.instagram.com/smiledetailing.by", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "autovera", "name": "Auto Vera", "niche": "Оклейка авто защитной плёнкой", "ncode": "detailing", "url": "https://auto-vera.by/", "phone": "+375 29 964-99-91", "email": "auto.vera.minsk@gmail.com", "addr": "Минский р-н, Королищевичи, ул. Совхозная, 2Д", "ms": 1794, "status_http": 200, "has_calc": false, "tg": "https://t.me/Auto_Vera", "insta": "https://www.instagram.com/auto_vera", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "ikuhni", "name": "Идеал Кухни", "niche": "Кухни под заказ в Минске", "ncode": "kitchen", "url": "https://ikuhni.by/", "phone": "+375 44 578-77-77", "email": "5787777@mail.ru", "addr": "г. Минск", "ms": 1769, "status_http": 200, "has_calc": false, "tg": "https://t.me/IDEAL_KUHNI", "insta": "https://www.instagram.com/kuhni_ideal", "pain": "Нет интерактивного онлайн-калькулятора цены под параметры клиента"}, {"slug": "energiadetailing", "name": "Energia Detailing", "niche": "Полировка, керамика и защита", "ncode": "detailing", "url": "https://energiadetailing.by/", "phone": "+375 29 640-99-99", "email": "info@energiadetailing.by", "addr": "г. Минск, ул. Тимирязева, 70", "ms": 1694, "status_http": 200, "has_calc": false, "tg": "https://t.me/energiadetailing", "insta": "https://www.instagram.com/energiadetailing", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "remontprofi", "name": "РемонтПрофи.бел", "niche": "Ремонт квартир под ключ", "ncode": "renovation", "url": "https://xn----itbkoffchdgt2a.xn--90ais/", "phone": "+375 29 669-30-83", "email": "info@remont-profi.by", "addr": "г. Минск, ул. Савицкого, 12", "ms": 1500, "status_http": 200, "has_calc": false, "tg": "https://t.me/Remontprofiby", "insta": "https://www.instagram.com/remont_profi.by", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "primebeli", "name": "ПриМебели", "niche": "Производство кухонь на заказ", "ncode": "detailing", "url": "https://primebeli.by/", "phone": "+375 29 120-80-55", "email": "primebeli.call@mail.ru", "addr": "г. Минск", "ms": 1219, "status_http": 200, "has_calc": false, "tg": "https://t.me/primebeli", "insta": "https://www.instagram.com/primebeli", "pain": "Нет интерактивного онлайн-калькулятора цены под параметры клиента"}, {"slug": "detailing4me", "name": "Detailing4Me", "niche": "Профессиональный детейлинг", "ncode": "detailing", "url": "https://detailing4me.by/", "phone": "+375 29 717-74-42", "email": "bodru212@gmail.com", "addr": "г. Минск, ул. Совхозная, 2Д", "ms": 4041, "status_http": 200, "has_calc": true, "tg": "https://t.me/nikita_pol9kov", "insta": "https://www.instagram.com/detailing_service_minsk", "pain": "Медленный отклик на мобильном (4041 мс)"}, {"slug": "carsusa", "name": "CarsUSA Минск", "niche": "Пригон авто из США, Канады и Китая", "ncode": "autoimport", "url": "https://carsusa.by/", "phone": "+375 29 626-55-66", "email": "infocarsusa@mail.ru", "addr": "г. Минск, Логойский тракт, 22А к.2, оф. 812", "ms": 3682, "status_http": 200, "has_calc": true, "tg": "https://t.me/Carsusa_by_Minsk", "insta": "https://www.instagram.com/carsusa.by", "pain": "Долгий отклик на смартфоне (3682 мс)"}, {"slug": "riancar", "name": "RianCar", "niche": "Кузовной уход и оклейка плёнкой", "ncode": "detailing", "url": "https://riancar.by/", "phone": "+375 (29) 362-52-46", "email": "", "addr": "г. Минск", "ms": 3065, "status_http": 200, "has_calc": true, "tg": "https://t.me/Riancar", "insta": "https://www.instagram.com/riancar_detailing", "pain": "Медленный отклик на мобильном (3065 мс)"}, {"slug": "globaldetailing", "name": "GlobalDetailing", "niche": "Детейлинг в центре Минска", "ncode": "detailing", "url": "https://global-detailing.by/", "phone": "+375 29 319-13-13", "email": "3191313@mail.ru", "addr": "г. Минск, ул. Семёнова, 35 (Корона-Сити)", "ms": 2397, "status_http": 200, "has_calc": true, "tg": "https://t.me/Global_detailing", "insta": "https://www.instagram.com/global_detailing_", "pain": "Медленный отклик на мобильном (2397 мс)"}, {"slug": "solutionauto", "name": "Auto Solution", "niche": "Заказ авто из США, ЕС, Китая и Кореи", "ncode": "autoimport", "url": "https://solutionauto.by/", "phone": "+375 29 678-60-60", "email": "info@solutionauto.by", "addr": "г. Минск, ул. Филимонова, 53А", "ms": 2295, "status_http": 200, "has_calc": true, "tg": "https://t.me/autosolutionexport", "insta": "https://www.instagram.com/autosolutionexport", "pain": "Долгий отклик на смартфоне (2295 мс)"}, {"slug": "kitmotor", "name": "KitMotor", "niche": "Электромобили и авто из Китая", "ncode": "autoimport", "url": "https://kitmotor.by/", "phone": "+375 44 744-11-22", "email": "info@kitmotor.by", "addr": "г. Минск, пр. Победителей, 63В", "ms": 2279, "status_http": 200, "has_calc": true, "tg": "https://telegram.me/KitMotor_bot", "insta": "https://www.instagram.com/kitdrug_motor", "pain": "Долгий отклик на смартфоне (2279 мс)"}, {"slug": "amerika", "name": "Amerika.by", "niche": "Авто с аукционов Copart и IAAI", "ncode": "autoimport", "url": "https://amerika.by/", "phone": "+375 29 633-28-28", "email": "info@amerika.by", "addr": "г. Минск, ул. Большое Стиклево, 83", "ms": 2061, "status_http": 200, "has_calc": true, "tg": "https://t.me/amerikaa_by", "insta": "https://www.instagram.com/amerika.by", "pain": "Долгий отклик на смартфоне (2061 мс)"}, {"slug": "vinylstudio", "name": "VinylStudio", "niche": "Студия оклейки и детейлинга", "ncode": "detailing", "url": "https://vinylstudio.by/", "phone": "+375 29 812-99-99", "email": "info@vinylstudio.by", "addr": "г. Минск, ул. Карла Либкнехта, 68А", "ms": 1939, "status_http": 200, "has_calc": true, "tg": "https://t.me/VinylStudio_Belarus", "insta": "https://www.instagram.com/vinylstudio.by", "pain": "Медленный отклик на мобильном (1939 мс)"}, {"slug": "novuskuhni", "name": "Novus Кухни", "niche": "Производство кухонь под заказ", "ncode": "detailing", "url": "https://novuskuhni.by/", "phone": "+375 29 102-56-56", "email": "info@novuskuhni.by", "addr": "г. Минск", "ms": 1909, "status_http": 200, "has_calc": true, "tg": "https://t.me/novus_kuhni", "insta": "https://www.instagram.com/novus_kuhni", "pain": "Долгий отклик на смартфоне (1909 мс)"}, {"slug": "chestniypodbor", "name": "Честный Подбор", "niche": "Автоподбор и диагностика авто", "ncode": "autopodbor", "url": "https://xn--90afcqthcencl1d0c.xn--90ais/", "phone": "+375 29 632-96-78", "email": "avtoexpert-by@yandex.by", "addr": "г. Минск", "ms": 1891, "status_http": 200, "has_calc": true, "tg": "https://t.me/chestnyi_auto_podbor_bot", "insta": "https://www.instagram.com/avto_expert_by", "pain": "Медленный отклик на мобильном (1891 мс)"}, {"slug": "mebelzakaz5", "name": "МебельЗаказ5", "niche": "Кухни на заказ в рассрочку", "ncode": "kitchen", "url": "https://mebelzakaz5.by/kuhni-pod-zakaz/", "phone": "+375 44 716-10-20", "email": "mebelzakaz5by@gmail.com", "addr": "г. Минск, ул. Берута, 3Б, оф. 909", "ms": 1706, "status_http": 200, "has_calc": true, "tg": "https://t.me/Forty_Studio", "insta": "https://www.instagram.com/forty_studio", "pain": "Долгий отклик на смартфоне (1706 мс)"}, {"slug": "autogroup", "name": "AutoGroup", "niche": "Авто из США, Кореи, Европы и Китая", "ncode": "autoimport", "url": "https://autogroup.by/", "phone": "+375 29 660-44-55", "email": "contact@autogroup.by", "addr": "г. Минск, ул. Тимирязева, 72, оф. 7007", "ms": 1642, "status_http": 200, "has_calc": true, "tg": "https://t.me/AutoGroup_Lead_Bot", "insta": "https://www.instagram.com/autogroupby", "pain": "Долгий отклик на смартфоне (1642 мс)"}, {"slug": "usaauto", "name": "USA-Auto.by", "niche": "Авто из США под ключ", "ncode": "autoimport", "url": "https://usa-auto.by/", "phone": "+375 29 653-40-76", "email": "", "addr": "Минский р-н, Колодищи, ул. Парковая, 27", "ms": 1543, "status_http": 200, "has_calc": true, "tg": "https://t.me/usaautoby", "insta": "https://www.instagram.com/usa_auto.by", "pain": "Долгий отклик на смартфоне (1543 мс)"}, {"slug": "okleika", "name": "Francev Detailing", "niche": "Детейлинг и оклейка плёнкой", "ncode": "detailing", "url": "https://okleika.by/", "phone": "+375 29 668-66-61", "email": "francev.dtl@gmail.com", "addr": "г. Минск, ул. Солтыса, 20", "ms": 1511, "status_http": 200, "has_calc": true, "tg": "https://t.me/Fd_by", "insta": "https://www.instagram.com/francev_dtl", "pain": "Медленный отклик на мобильном (1511 мс)"}, {"slug": "goodtrade", "name": "ГудАвтоТрейд", "niche": "Автомобили из Китая под ключ", "ncode": "autoimport", "url": "https://goodtrade.by/", "phone": "+375 25 910-93-22", "email": "GOODTRADEMINSK@mail.ru", "addr": "г. Минск, пр-т Дзержинского, 115, оф. 465", "ms": 1388, "status_http": 200, "has_calc": true, "tg": "https://t.me/GoodAvtoTrade_bot", "insta": "https://www.instagram.com/goodtrade.by", "pain": "Классическая форма без мгновенного расчёта сметы в Telegram режет конверсию в заявку в 2–3 раза"}, {"slug": "pravimebel", "name": "Pravi-Mebel", "niche": "Модульные и заказные кухни за 14 дней", "ncode": "kitchen", "url": "https://pravimebel.by/", "phone": "+375 29 656-42-30", "email": "", "addr": "г. Минск", "ms": 1260, "status_http": 200, "has_calc": true, "tg": "https://t.me/Pravi_mebel", "insta": "https://www.instagram.com/pravi_mebel", "pain": "Классическая форма без мгновенного расчёта сметы в Telegram режет конверсию в заявку в 2–3 раза"}, {"slug": "dihouse", "name": "diHouse Ремонт", "niche": "Ремонт и отделка квартир под ключ", "ncode": "renovation", "url": "https://dihouse.by/", "phone": "+375 44 580-73-75", "email": "", "addr": "г. Минск", "ms": 10353, "status_http": "ERR", "has_calc": false, "tg": "", "insta": "", "pain": "Сайт недоступен/сбоит с части сетей или долго открывается — критическая потеря рекламного трафика"}, {"slug": "bycars", "name": "ByCars", "niche": "Автомобили из Китая под заказ", "ncode": "autoimport", "url": "https://bycars.by/", "phone": "+375 44 707-88-00", "email": "sales@bycars.by", "addr": "г. Минск, ул. Петруся Бровки, 30/5", "ms": 5930, "status_http": 200, "has_calc": false, "tg": "", "insta": "https://www.instagram.com/bycars.by", "pain": "Нет интерактивного онлайн-калькулятора цены под параметры клиента"}, {"slug": "medicaldent", "name": "MedicalDent", "niche": "Платная стоматология", "ncode": "dental", "url": "https://medicaldent.by/", "phone": "+375 44 555-15-55", "email": "medicaldent@mail.ru", "addr": "г. Минск", "ms": 4960, "status_http": 200, "has_calc": false, "tg": "", "insta": "https://www.instagram.com/medicaldent_minsk", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "forza", "name": "Forza Детейлинг", "niche": "Химчистка, полировка, PPF плёнка", "ncode": "detailing", "url": "https://forza.by/", "phone": "+375 29 345-80-80", "email": "", "addr": "г. Минск, ул. Нововиленская, 27", "ms": 2446, "status_http": 200, "has_calc": false, "tg": "", "insta": "https://www.instagram.com/forza.detailing", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "autopodbor1", "name": "AutopodborMinsk", "niche": "Автоподбор под ключ в Минске", "ncode": "autopodbor", "url": "https://autopodborminsk.by/", "phone": "+375 33 355-55-35", "email": "autopodborminsk@yandex.by", "addr": "г. Минск, ул. Германовская, 19, оф. 22", "ms": 2211, "status_http": 200, "has_calc": false, "tg": "", "insta": "https://www.instagram.com/autopodborminsk.by", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "siviymerin", "name": "Сивый Мерин Детейлинг", "niche": "Защитные покрытия и плёнка", "ncode": "detailing", "url": "https://siviy-merin.by/", "phone": "+375 29 600-00-00", "email": "siviy-merin.by@yandex.ru", "addr": "г. Минск", "ms": 2181, "status_http": 200, "has_calc": false, "tg": "", "insta": "https://www.instagram.com/siviymerin", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "stozapad", "name": "СТО Запад", "niche": "Автовинил и кузовные услуги", "ncode": "detailing", "url": "https://stozapad.by/", "phone": "+375293082020", "email": "mavra41@bk.ru", "addr": "г. Минск", "ms": 2103, "status_http": 200, "has_calc": false, "tg": "", "insta": "https://www.instagram.com/stozapad.by", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "3dantista", "name": "Три Дантиста", "niche": "Стоматологическая клиника", "ncode": "dental", "url": "https://3dantista.by/", "phone": "+375 29 668-72-72", "email": "tridantistaplus@gmail.com", "addr": "г. Минск", "ms": 2022, "status_http": 200, "has_calc": false, "tg": "", "insta": "", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "newstyle", "name": "New-Style Автотюнинг", "niche": "Оклейка авто плёнкой", "ncode": "detailing", "url": "https://new-style.by/", "phone": "+375 29 378-56-56", "email": "newstyleavtotun@mail.ru", "addr": "г. Минск, ул. Ольшевского, 1В", "ms": 2009, "status_http": 200, "has_calc": false, "tg": "", "insta": "https://www.instagram.com/new_style.by", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "shkafmaster", "name": "Шкаф-Мастер (Гиперион)", "niche": "Шкафы-купе и кухни на заказ", "ncode": "kitchen", "url": "https://shkaf-master.by/", "phone": "+375 29 650-10-24", "email": "info@shkaf-master.by", "addr": "г. Минск", "ms": 1968, "status_http": 200, "has_calc": false, "tg": "", "insta": "", "pain": "Нет интерактивного онлайн-калькулятора цены под параметры клиента"}, {"slug": "avtopolirovka", "name": "Avtopolirovka Minsk", "niche": "Полировка и оклейка авто", "ncode": "detailing", "url": "https://avtopolirovka.by/", "phone": "+375 44 488-66-17", "email": "avtopolirovka.minsk@gmail.com", "addr": "г. Минск", "ms": 1924, "status_http": 200, "has_calc": false, "tg": "", "insta": "", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "megamoika", "name": "МегаМойка Детейлинг", "niche": "Оклейка авто и детейлинг", "ncode": "detailing", "url": "https://megamoika.by/okleyka-auto/", "phone": "+375 29 612-77-88", "email": "moikaminsk@yandex.by", "addr": "г. Минск, ул. Короля, 88/5", "ms": 1727, "status_http": 200, "has_calc": false, "tg": "", "insta": "https://www.instagram.com/megamoikaminsk", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "detailingpoint", "name": "Detailing Point", "niche": "Студия детейлинга салона и кузова", "ncode": "detailing", "url": "https://detailing-point.by/", "phone": "+375 29 888-39-99", "email": "", "addr": "г. Минск, Меньковский тракт, 47", "ms": 1618, "status_http": 200, "has_calc": false, "tg": "", "insta": "https://www.instagram.com/detailing_point.minsk", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "podkluch", "name": "Pod-Kluch.by", "niche": "Комплексный ремонт квартир в новостройках", "ncode": "renovation", "url": "https://pod-kluch.by/", "phone": "+375 33 669-87-66", "email": "", "addr": "г. Минск", "ms": 1593, "status_http": 200, "has_calc": false, "tg": "", "insta": "", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "panfasad", "name": "Пан-Фасад", "niche": "Фабрика кухонь и мебели", "ncode": "kitchen", "url": "https://panfasad.com/catalog/kykhni-na-zakaz/", "phone": "+375 33 673-55-55", "email": "mail@panfasad.com", "addr": "г. Минск", "ms": 1554, "status_http": 200, "has_calc": false, "tg": "", "insta": "https://www.instagram.com/panfasad", "pain": "Нет интерактивного онлайн-калькулятора цены под параметры клиента"}, {"slug": "mebellite", "name": "MebelLite", "niche": "Шкафы-купе и кухни под заказ", "ncode": "kitchen", "url": "https://mebellite.by/kuhni", "phone": "+375 29 635-26-65", "email": "denisv.80@mail.ru", "addr": "г. Минск", "ms": 1477, "status_http": 200, "has_calc": false, "tg": "", "insta": "", "pain": "Нет интерактивного онлайн-калькулятора цены под параметры клиента"}, {"slug": "autostyling", "name": "Autostyling", "niche": "Оклейка и защита кузова", "ncode": "detailing", "url": "https://autostyling.by/", "phone": "+375 29 396-96-19", "email": "contact@autostyling.by", "addr": "г. Минск, ул. Змитрока Бядули, 13 к.7", "ms": 1191, "status_http": 200, "has_calc": false, "tg": "", "insta": "https://www.instagram.com/autostyling.by", "pain": "Нет интерактивного онлайн-калькулятора стоимости"}, {"slug": "imebel", "name": "i-Mebel (ТЦ Спектр)", "niche": "Мебель, кухни и шкафы-купе", "ncode": "kitchen", "url": "https://i-mebel.by/", "phone": "+375 17 317-80-80", "email": "info@i-mebel.by", "addr": "г. Минск, пр. Независимости, 179", "ms": 1151, "status_http": 200, "has_calc": false, "tg": "", "insta": "https://instagram.com/imebel.by", "pain": "Нет интерактивного онлайн-калькулятора цены под параметры клиента"}, {"slug": "creatdent", "name": "КреативДент", "niche": "Стоматология: имплантация, виниры", "ncode": "dental", "url": "https://creatdent.by/", "phone": "+375 29 899-70-02", "email": "sweetalert@2.1.2", "addr": "г. Минск, ул. Кропоткина, 95", "ms": 2089, "status_http": 200, "has_calc": true, "tg": "", "insta": "https://www.instagram.com/creatdent", "pain": "Нет прямой кнопки/бота мгновенного расчёта в Telegram"}, {"slug": "zakazkuhni", "name": "Заказ-Кухни Минск", "niche": "Изготовление кухонь под заказ", "ncode": "detailing", "url": "https://zakaz-kuhni-minsk.by/", "phone": "+375 29 593-32-21", "email": "zamer@zakaz-kuhni-minsk.by", "addr": "г. Минск", "ms": 2057, "status_http": 200, "has_calc": true, "tg": "", "insta": "", "pain": "Нет мгновенной связки с Telegram для фиксации расчёта"}, {"slug": "globalcar", "name": "Global Car", "niche": "Авто из США и Китая под ключ", "ncode": "autoimport", "url": "https://globalcar.by/", "phone": "+375 44 579-14-88", "email": "globalcar.by@gmail.com", "addr": "г. Минск, ул. Толстого, 8, оф. 264", "ms": 2052, "status_http": 200, "has_calc": true, "tg": "", "insta": "https://instagram.com/globalcar.by", "pain": "Нет мгновенной связки с Telegram для фиксации расчёта"}, {"slug": "minskzov", "name": "Кухни ЗОВ Салон", "niche": "Салон кухонь и шкафов на заказ", "ncode": "kitchen", "url": "https://minsk-zov.by/", "phone": "+375 29 888-64-68", "email": "", "addr": "г. Минск, ул. Янковского, 44", "ms": 1909, "status_http": 200, "has_calc": true, "tg": "", "insta": "https://www.instagram.com/pan_kuharski", "pain": "Нет мгновенной связки с Telegram для фиксации расчёта"}, {"slug": "nebomebel", "name": "Небо Мебель", "niche": "Кухни по индивидуальным проектам", "ncode": "kitchen", "url": "https://nebo.by/mebel-na-zakaz/kuhni/", "phone": "+375 29 165-70-70", "email": "mebel@nebo.by", "addr": "г. Минск, ул. Грушевская, 19", "ms": 1792, "status_http": 200, "has_calc": true, "tg": "", "insta": "https://www.instagram.com/nebo.interior", "pain": "Нет мгновенной связки с Telegram для фиксации расчёта"}, {"slug": "grosslend", "name": "Grosslend Мебель", "niche": "Кухни под заказ от производителя", "ncode": "kitchen", "url": "https://grosslend.by/kuhni", "phone": "+375 29 617-27-50", "email": "mail-grosslend@yandex.com", "addr": "г. Минск", "ms": 1753, "status_http": 200, "has_calc": true, "tg": "", "insta": "https://instagram.com/grosslend.by", "pain": "Нет мгновенной связки с Telegram для фиксации расчёта"}, {"slug": "kuhnivminske", "name": "Кухни в Минске (ТЦ Ленинград)", "niche": "Кухни под заказ", "ncode": "kitchen", "url": "https://kuhni-vminske.by/", "phone": "+375 29 578-77-77", "email": "5787777@mail.ru", "addr": "г. Минск, ул. Ленина, 27, ТЦ Ленинград", "ms": 1627, "status_http": 200, "has_calc": true, "tg": "", "insta": "https://www.instagram.com/kuhni_ideal", "pain": "Нет мгновенной связки с Telegram для фиксации расчёта"}, {"slug": "oklei", "name": "Oklei.by", "niche": "Оклейка авто плёнкой и тонировка", "ncode": "detailing", "url": "https://oklei.by/", "phone": "+375 44 555-17-17", "email": "rfmbel@gmail.com", "addr": "г. Минск, ул. Бирюзова, 4/29", "ms": 1580, "status_http": 200, "has_calc": true, "tg": "", "insta": "https://www.instagram.com/retrofitminsk", "pain": "Нет прямой кнопки/бота мгновенного расчёта в Telegram"}, {"slug": "vsekuhni", "name": "Все-Кухни.by", "niche": "Эксклюзивные кухни на заказ", "ncode": "kitchen", "url": "https://vse-kuhni.by/", "phone": "+375 29 630-51-30", "email": "zholnerik@mail.ru", "addr": "г. Минск", "ms": 1576, "status_http": 200, "has_calc": true, "tg": "", "insta": "", "pain": "Нет мгновенной связки с Telegram для фиксации расчёта"}, {"slug": "mholl", "name": "Мебель Холл", "niche": "Корпусная мебель и кухни на заказ", "ncode": "kitchen", "url": "https://mholl.by/", "phone": "+375 44 794-11-11", "email": "info@mebelholl.by", "addr": "г. Минск", "ms": 1541, "status_http": 200, "has_calc": true, "tg": "", "insta": "https://www.instagram.com/mfamily.by", "pain": "Нет мгновенной связки с Telegram для фиксации расчёта"}, {"slug": "emmetcars", "name": "EmmetCars", "niche": "Пригон авто из США под ключ", "ncode": "autoimport", "url": "https://emmetcars.by/", "phone": "+375 29 111-12-34", "email": "EmmetCars@yandex.by", "addr": "г. Минск, пер. Северный, 17, оф. 3", "ms": 1230, "status_http": 200, "has_calc": true, "tg": "", "insta": "https://www.instagram.com/emmetcars.by", "pain": "Нет мгновенной связки с Telegram для фиксации расчёта"}];
+const TG_GIGS = [{"date": "2026-10-21", "channel": "rueventjob", "contact": "@nnameaccount", "post_url": "https://t.me/rueventjob/19197", "cat": "web_bot", "summary": "1. #Вебдизайнер\nдля совместных проектов на Tilda: чистые макеты лендингов по готовым ТЗ и структуре, от первых экранов до целых страниц. Важны визуальный стиль, аккуратность и дедлайны. Заказы проектные, условия обсуждаются; при отклике приложите портфолио\n📝 @nnameaccount"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@lilacvow", "post_url": "https://t.me/rueventjob/19197", "cat": "web_bot", "summary": "2. #ИИ_дизайнер\nДля маркетплейсов, который работает с AI: регулярно создавать карточки и объявления, инфографику, обрабатывать и генерировать изображения. Постоянная работа; детали оплаты обсуждаются с работодателем\n📝 @lilacvow"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@elevenmins", "post_url": "https://t.me/rueventjob/19197", "cat": "ai_video", "summary": "3. #ИИ_креатор\nПроект о здоровом питании ищет AI-Reels-креатора для роликов 60–90 секунд: персонажи и сцены в Kling/Veo/Seedance, AI-голос, монтаж, субтитры и хуки. Постоянно 3–5 роликов в неделю, 1 000–1 500 ₽ за видео, срок сдачи 48 часов, нейроподписки оплачивают. Тестовое оплачиваемо\n📝 @elevenmins"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@TTDSMTH", "post_url": "https://t.me/rueventjob/19197", "cat": "ai_video", "summary": "4. #ИИ_монтажер\nДля проекта о недвижимости нужно создать рилс длительностью 30–40 секунд с AI-аватаром и клонированием голоса. При успешном результате возможно регулярное сотрудничество; детали оплаты обсуждаются\n📝 @TTDSMTH"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@diore8", "post_url": "https://t.me/rueventjob/19197", "cat": "web_bot", "summary": "5. #Монтажеры\nВ команду ищут двух-трёх монтажёров на постоянный поток рилс: около 30–40 роликов в месяц, монтаж в Premiere Pro или After Effects на ПК, готовность к правкам. Оплата от 1000₽ за ролик. В отклике слово «МОНТАЖ» и пара работ\n📝 @diore8"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@Alinagoncharuk", "post_url": "https://t.me/rueventjob/19197", "cat": "ai_design", "summary": "6. #Видеомонтажер\nБюро развития личного бренда ищет монтажёра на регулярные 15–30 Reels: быстрая сдача, актуальные тренды, идеи и аккуратный монтаж. Оплата 1 000 ₽ за ролик; требуется резюме\n📝 @Alinagoncharuk"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@mishka_krutishka", "post_url": "https://t.me/rueventjob/19197", "cat": "ai_video", "summary": "7. #Рилсмейкер\nДля личного блога ищу монтажёра динамичных рилс и простых POV-роликов на долгосрочное сотрудничество. Ориентир — 20 роликов в месяц; при отклике нужны портфолио и стоимость такого объёма\n📝 @mishka_krutishka"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@Marina_Masloy", "post_url": "https://t.me/rueventjob/19197", "cat": "web_bot", "summary": "8. #Рилсмейкер\nИщу монтажёра разговорных и личных рилс: около четырёх видео в неделю, оплата 400–700 ₽ за ролик в зависимости от сложности. Требуются аккуратная работа по референсам и примеры монтажа\n📝 @Marina_Masloy"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@katrina_shen", "post_url": "https://t.me/rueventjob/19197", "cat": "web_bot", "summary": "10. #ИИ_видеокреатор\nЮвелирному бренду нужно AI-видео с изделиями по подробным референсам. Будет плюсом опыт fashion-брендов; старт — проектная работа с возможностью дальнейших заказов. В отклике нужны портфолио и цена видео до 15 секунд\n📝 @katrina_shen"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@Elena36771", "post_url": "https://t.me/rueventjob/19197", "cat": "web_bot", "summary": "11. #Дизайнер\nИщут удалённого помощника по оформлению Stories в Canva: по 3–4 Stories пять дней в неделю, сторителлинг по готовым темам. Материалы предоставляют, работу можно собрать заранее. Около часа в день, 6000₽/мес\n📝 @Elena36771"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@alliyaaar", "post_url": "https://t.me/rueventjob/19197", "cat": "ai_design", "summary": "12. #Графдизайнер\nдля создания логотипов в соц сетях\n📝 @alliyaaar"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@omen0men", "post_url": "https://t.me/rueventjob/19197", "cat": "web_bot", "summary": "13. #UI_UX_дизайнер\nРастущий fintech-сервис ищет дизайнера для Telegram-бота, Mini App и сайта: улучшать сценарии и интерфейсы, работать с аналитиком в Amplitude, тестировать изменения, рисовать адаптивы и AI-графику. Нужны самостоятельность, Figma и сильное портфолио, отчётность по работе и тестам\n📝 @omen0men"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@Grade33", "post_url": "https://t.me/rueventjob/19197", "cat": "web_bot", "summary": "14. #UI_UX_дизайнер\nДля цифровой платформы конструирования и изготовления одежды нужен UI/UX-дизайнер. Предпочтителен опыт маркетплейсов, конфигураторов с множеством настроек или CRM/ERP. При отклике сразу требуется портфолио; условия обсуждаются\n📝 @Grade33"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@zero_zera", "post_url": "https://t.me/rueventjob/19197", "cat": "web_bot", "summary": "15. #Программист дизайнер\n для мобильного приложения простенького нужно оболочку сделать нормальную а то пока не очень. Приложение для майнкрафта, уже рабочее\n📝 @zero_zera"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@victory_kaylin", "post_url": "https://t.me/rueventjob/19197", "cat": "ai_video", "summary": "16. #Режиссер монтажа\nДля развлекательного YouTube-канала на долгосрочное сотрудничество: челленджи, реалити и влоги, сторителлинг, юмор, звук и удержание зрителя. Нужны 2–3 длинных ролика с просмотрами, описание вашего вклада и стоимость монтажа 10–15 минут; тестовое для лучших кандидатов оплачивается\n📝 @victory_kaylin"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@agentix2026", "post_url": "https://t.me/rueventjob/19197", "cat": "ai_video", "summary": "18. #Контент_креатор\nAI-медиа-агентство «Агентикс» ищет контент-мейкера под один продукт: Reels, Shorts, карусели, AI-аватары, адаптация контент-плана, настройка AI-продавца и аналитика. Нужны AI-видео, монтаж, SMM и готовность к полному дню. $750/мес. на старте; предусмотрено тестовое\n📝 @agentix2026"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@sabrina_salikhova", "post_url": "https://t.me/rueventjob/19197", "cat": "web_bot", "summary": "19. #Контент_стратег\nВ онлайн-проект с премиальной предпринимательской аудиторией ищут смысловика/маркетолога-стратега: позиционирование, офферы, воронки, презентации и контент, который приводит спрос. Нужны реальные кейсы работы с предпринимателями и топ-менеджерами. Полностью удалённо, долгосрочно, доход индивидуальный\n📝 @sabrina_salikhova"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@pkmoln", "post_url": "https://t.me/rueventjob/19197", "cat": "web_bot", "summary": "20. #Контентменеджер\nАвтор Twitch-блога Милена ищет менеджера: идеи для стримов и соцсетей, нарезки, короткие ролики, обложки, посты, контент-план и аналитика. Можно без большого опыта, но с интересом к стримингу. от 10000₽/мес. на старте; в отклике нужны монтажные работы и идеи\n📝 @pkmoln"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@zxcptr", "post_url": "https://t.me/rueventjob/19197", "cat": "ai_design", "summary": "21. #Контент_маркетолог\nМагазин AI-подписок и цифровых товаров ищет контент-маркетолога: вести Telegram, писать продающие посты, готовить акции, улучшать карточки товаров, интеграции и анализировать продажи. Нужны сильные тексты, офферы и AI. Удалённо, около 20 часов в неделю, гибкий график, фикс + бонусы\n📝 @zxcptr"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@ula_artdiz", "post_url": "https://t.me/rueventjob/19197", "cat": "web_bot", "summary": "22. #Маркетолог\nDigital-агентство ищет начинающего интернет-маркетолога: сайты и ТЗ, координация клиентов, SEO, репутация в картах, Авито и другие площадки. Подойдут профильные курсы и базовые навыки таблиц, Метрики и AI. 5/2, 09:00–18:00; 50000₽ на старте, после 25 рабочих дней — 60000₽, обучение\n📝 @ula_artdiz"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@IrinaVikh", "post_url": "https://t.me/rueventjob/19197", "cat": "ai_video", "summary": "24. #SMM_стратег\nДля предстоящего живого вебинара ищут SMM-команду на прогрев тёплой аудитории: стратегия получения регистраций, ТЗ на съёмку и монтаж контента. Нужен опыт вебинарных запусков и прогревов; оплата по договорённости\n📝 @IrinaVikh"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@el_khz", "post_url": "https://t.me/rueventjob/19197", "cat": "web_bot", "summary": "28. #Проджект-менеджер\nDigital-агентство ищет удалённого PM на 10 проектов по рекламе и сайтам: команды, сроки, CPL, KPI, CRM, отчёты и общение с клиентами. Нужен опыт PM в агентстве от года и понимание Яндекс Директа/таргета. 5/2, 09:00–18:00 МСК, два месяца 60000₽, затем 80000–100000₽. В отклике слово «Джун»\n📝 @el_khz"}, {"date": "2026-10-21", "channel": "rueventjob", "contact": "@sence_hr", "post_url": "https://t.me/rueventjob/19197", "cat": "ai_design", "summary": "29. #Копирайтер\nКоманда SENCE ищет райтера для личного бренда, школы, Reels и других текстовых материалов. Важно уметь писать живо, самостоятельно и без AI; формальный стаж не принципиален. Условия сотрудничества при отклике\n📝 @sence_hr\n\n\n❤️ Коллеги, плз, тапните ваш царский лайк 🫶🏻 Вам всё равно, а нам приятно))"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@x409n", "post_url": "https://t.me/rueventjob/19209", "cat": "ai_design", "summary": "1. #Дизайнер\nДля спортивного бренда одежды нужно создать брендбук. Требуется опыт фирменного стиля и сильные релевантные кейсы; в отклик портфолио и стоимость\n📝 @x409n"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@XupermanXI", "post_url": "https://t.me/rueventjob/19209", "cat": "web_bot", "summary": "2. #Дизайнер_лого\nДля цифрового продукта по аналитике YouTube-ниш нужно разработать логотип и мини-стиль (цвета и шрифт), читаемый на иконке приложения и favicon 16×16. Есть ТЗ, бюджет 6 000 ₽. Концепции до 24 октября, финал до 28 октября; в отклике нужны примеры IT-логотипов\n📝 @XupermanXI"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@alishashurkina", "post_url": "https://t.me/rueventjob/19209", "cat": "ai_design", "summary": "3. #Иллюстратор\nДля женского воркбука о самопознании нужно нарисовать 4–6 чёрно-белых иллюстраций-раскрасок формата А5 в романтичном и современном стиле. Сначала одна оплачиваемая пробная иллюстрация. В отклике укажите портфолио, цену за рисунок/серию и сроки\n📝 @alishashurkina"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@Chulpan_design", "post_url": "https://t.me/rueventjob/19209", "cat": "ai_design", "summary": "4. #3D_визуализатор\nНужен 3D-визуализатор дома площадью 100–130 м². Детали проекта и стоимость обсуждаются с заказчиком.\n📝 @Chulpan_design"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@BerlizevaEvgeniya", "post_url": "https://t.me/rueventjob/19209", "cat": "web_bot", "summary": "5. #Дизайнер\nДля этикетки безалкогольного пива в алюминиевой банке нужен технический дизайнер: проверить и исправить макет по ТР ТС 005/2011 и 022/2011, шрифты, значки и подготовку к печати. Нужны кейсы пищевой упаковки, знание регламентов и стоимость работы\n📝 @BerlizevaEvgeniya"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@mirrozavr", "post_url": "https://t.me/rueventjob/19209", "cat": "web_bot", "summary": "6. #Бренд_дизайнер\nИщу дизайнера с опытом крупных event-агентств, чтобы обновить брендбук и разработать стильные клиентские визуалы. Нужны релевантное портфолио и примеры работ\n📝 @mirrozavr"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@senseichik_1555", "post_url": "https://t.me/rueventjob/19209", "cat": "web_bot", "summary": "8. #Вебдизайнер\nПортугальская компания Lda ищет веб-дизайнера для удалённых заказов. Рассматривают в том числе начинающих; оплата за проект, возможно долгосрочное сотрудничество\n📝 @senseichik_1555"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@Alisa_Gonzaga", "post_url": "https://t.me/rueventjob/19209", "cat": "web_bot", "summary": "10. #Вебдизайнер\nОнлайн-школа ищет дизайнера презентаций к урокам и вебинарам, а также для сайта на Tilda. Рабочее взаимодействие по московскому часовому поясу; оплата обсуждается\n📝 @Alisa_Gonzaga"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@Al_Vavilov", "post_url": "https://t.me/rueventjob/19209", "cat": "web_bot", "summary": "11. #Дизайнер - #верстальщик\nИздательство «БуксХаб» / «Редакция88» ищет дизайнера-верстальщика книг: концепции, обложки, книжные блоки, иллюстрации, AI-изображения и подготовка к печати. Нужны 2+ года опыта, InDesign, Photoshop, Illustrator и AI. долгосрочная проектная работа, сдельная оплата\n📝 @Al_Vavilov"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@AnnGorbunova", "post_url": "https://t.me/rueventjob/19209", "cat": "ai_video", "summary": "14. #Монтажер\nНужно смонтировать готовый фильм на 15–20 минут из предоставленных исходников. Бюджет ограничен; условия обсуждаются с заказчиком\n📝 @AnnGorbunova"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@matvey_DSGNN", "post_url": "https://t.me/rueventjob/19209", "cat": "ai_video", "summary": "15. #Монтажер\nна регулярные разговорные и динамичные Reels: качественные склейки, смысловые надписи, зумы и тайминг. Для отбора просят тест на 15–20 секунд; в отклик портфолио и прайс\n📝 @matvey_DSGNN"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@Richgucciman", "post_url": "https://t.me/rueventjob/19209", "cat": "ai_video", "summary": "16. #Видеомонтажер\nДля спортивного клуба ищут монтажёра-мужчину на создание Reels. Бюджет — до 4 500 ₽ за ролик. При обращении укажите кодовое слово «СПОРТ»\n📝 @Richgucciman"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@selopgt", "post_url": "https://t.me/rueventjob/19209", "cat": "web_bot", "summary": "17. #Монтажер\nДля авторского канала ищу монтажёра YouTube с навыками работы с нейросетями. Ориентир — ролики около 20 минут по конкретному референсу; нужны портфолио, краткий рассказ о себе и стоимость монтажа 20-минутного видео\n📝 @emefdi\n\n18. Найден! ⛔️ #Видеомонтажер для крупного предприятия с подтверждённым опытом: создавать Reels, корпоративные и имиджевые видеоролики. Бюджет обсуждается; в отклике обязательна пометка «ютуб».\n📝 @selopgt\n\n19. "}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@danavadimovna", "post_url": "https://t.me/rueventjob/19209", "cat": "web_bot", "summary": "24. #Проджект-маркетолог\nв креативно-образовательный проект для запусков продуктов: стратегия, офферы, воронка, лендинги, вебинары, бюджет, команда, аналитика и выполнение плана продаж. Нужен опыт онлайн-запусков и управление маркетинговыми процессами. Удалённо, фикс + KPI; отклик с резюме и кейсами\n📝 @danavadimovna"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@Your_sleeping_dreams", "post_url": "https://t.me/rueventjob/19209", "cat": "ai_design", "summary": "27. #SMM\nОнлайн-школа «Морозилка» ищет специалиста для HR-бренда: VK и Telegram, истории о команде, посты о вакансиях, визуалы, рубрики и аналитика охватов. Нужны опыт сообществ, грамотные тексты и Canva/Figma. Примерно 3 часа в неделю, 15000₽ фикс + до 5000₽ бонус\n📝 @Your_sleeping_dreams"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@primecutl", "post_url": "https://t.me/rueventjob/19209", "cat": "ai_video", "summary": "28. #SMM\nPRIMECUT ищет специалиста для клиентских проектов в beauty, фитнесе и недвижимости: анализ ниши, контент-план, сценарии Reels, тексты, публикации и отчёты по охватам и заявкам. Нужны 2–3 года опыта и кейсы с цифрами. ЗП от 35000 ₽ в мес за проект; возможно вести несколько проектов, договор с самозанятым\n📝 @primecutl"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@msjulli", "post_url": "https://t.me/rueventjob/19209", "cat": "ai_video", "summary": "29. #SMM\nв футбольный кинопроект: Reels/TikTok, посты, Stories, спортивные инфоповоды, общение с аудиторией и аналитика. Нужны знание футбольной культуры, грамотные тексты, мобильный монтаж и Canva/Figma. В отклик — портфолио или резюме\n📝 @msjulli"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@polinaorlova_project", "post_url": "https://t.me/rueventjob/19209", "cat": "web_bot", "summary": "30. #SMM\nДля проекта здорового питания ищут специалиста на постоянную работу: Telegram и Дзен, посты, рубрики и аналитика вовлечённости. Нужны опыт от года, грамотные простые тексты и базовая аналитика. Удалённо, от 22 000 ₽/мес\n📝 @polinaorlova_project"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@aniyasin", "post_url": "https://t.me/rueventjob/19209", "cat": "web_bot", "summary": "33. #SMM\nМеждународный мультибрендовый бутик в Венгрии ищет SMM-команду. Обязателен опыт AI-генераций для контента; в отклике просят CV и примеры реализованных работ.\n📝 @aniyasin\n\n\n❤️ Коллеги, плз, тапните ваш царский лайк 🫶🏻 Вам всё равно, а нам приятно))"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@romanhertz01", "post_url": "https://t.me/rueventjob/19210", "cat": "ai_video", "summary": "(#Удаленка) Требуется #продюсер / influence- #менеджер \n\nAmuvi — социальная платформа с нейровидео: пользователи смотрят ролики, создают версии со своим лицом, публикуют контент и зарабатывают на его повторах.\nНужен опытный человек с действующими контактами блогеров, продюсеров и агентств, который сможет организовать продвижение продукта.\n\nЗадачи:\n— выходить на блогеров, их представителей, креаторов и команды монтажёров;\n— договариваться о реклам"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@julia_barcelo", "post_url": "https://t.me/rueventjob/19211", "cat": "content", "summary": "1. #Контентменеджер\nдля YouTube-каналов с лицензированными фильмами и сериалами: загрузка и продвижение, mid-roll-реклама, RPM/CPM, Content ID, авторские права, удержание, аналитика YouTube Studio. Нужны опыт монетизации и понимание правил платформы\n📝 @julia_barcelo"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@KNNADY", "post_url": "https://t.me/rueventjob/19211", "cat": "content", "summary": "2. #Контент_стратег\nв онлайн-школу в мягкой нише: разбирать CustDev, формировать темы и смыслы, стратегию Instagram и закрытого Telegram, прогревы, контент-планы и ТЗ. Нужны кейсы мягких ниш. Полностью удалённо, долгосрочно, оплата и загрузка индивидуальны; отклик с пометкой «Контент-смысловик»\n📝 @KNNADY"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@ulyana_formula", "post_url": "https://t.me/rueventjob/19211", "cat": "web_bot", "summary": "3. #Проджект-менеджер\nВ онлайн-проект эксперта по психологии ищут PM: операционное сопровождение и запуски, команда, продажи на диагностических созвонах, таблицы, Zoom и GetCourse. Нужны 2+ года работы с онлайн-школами и запуски от 3млн ₽. 09:00–17:00 МСК, 50 000 ₽ + процент от запусков и личных продаж.\n📝 @ulyana_formula"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@rustamblog", "post_url": "https://t.me/rueventjob/19211", "cat": "ai_design", "summary": "4. #Сценарист\nSimple Soft ищет сценариста для игры в жанре исторической визуальной новеллы. Обязателен опыт игровых сценариев и портфолио; Figma будет преимуществом. ЗП 70000\n📝 @rustamblog"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@lidiya_dymochka", "post_url": "https://t.me/rueventjob/19211", "cat": "web_bot", "summary": "5. #Сценарист\nВ проект с экспертным блогом на 90 тыс. подписчиков ищут сценариста-смысловика: Reels, Stories, прогревы, Telegram и сценарии бота. Нужны авторские хуки, работа с экспертными темами и самостоятельные тексты без AI. В отклик кейсы и работы; есть тестовое\n📝 @lidiya_dymochka"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@arryballi_Immerging", "post_url": "https://t.me/rueventjob/19211", "cat": "content", "summary": "6. #Сценарист\nДля YouTube-канала по Genshin Impact ищут сценариста, отлично разбирающегося в сюжете и особенностях игры. Глубокое знание Genshin обязательно\n📝 @arryballi_Immerging"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@Amg_hr_rb", "post_url": "https://t.me/rueventjob/19211", "cat": "content", "summary": "8. #Автор\nразвлекательного и новостного контента в Telegram-канал: искать инфоповоды, писать яркие короткие посты, делать мемы. Нужен опыт авторства мемных или новостных каналов, не просто публикации готового контента. Формат обсуждается; в отклик 3–5 собственных постов и мемов\n📝 @Amg_hr_rb"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@Gusenova_atmospher", "post_url": "https://t.me/rueventjob/19211", "cat": "ai_design", "summary": "9. #Дизайнер / #сторисмейкер\nДля студии перманентного макияжа и личного аккаунта эксперта ищут дизайнера визуала: лента, Stories, ретушь фото до/после по готовым текстам и ТЗ. Съёмки не требуются. 10 000–20 000 ₽/мес. за ленту и Stories, предусмотрено тестовое; для новичков еженедельная оплата без предоплаты.\n📝 @Gusenova_atmospher"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@inemesis_ss", "post_url": "https://t.me/rueventjob/19211", "cat": "ai_design", "summary": "11. #Дизайнер \nдля создания каталоговой презентации 10-15 стр\n📝 @inemesis_ss"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@Ignatovichstudio", "post_url": "https://t.me/rueventjob/19211", "cat": "web_bot", "summary": "12. #Вебдизайнер\nИщем человека, с опытом работы в тильде с интеграцией 1С и Битрикс. На отклик присылайте сразу кейсы и скриншоты с доказательствами подключения\n📝 @Ignatovichstudio"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@vika_dvmh", "post_url": "https://t.me/rueventjob/19211", "cat": "web_bot", "summary": "14. #Рилсмейкер\nВ музыкальный проект ищу монтажёра рилс: собирать концертные кадры в цельные ролики, работать с музыкальным ритмом, титрами и субтитрами, самостоятельно выстраивать драматургию. Оплата до 1 000 ₽ за ролик; тестовое видео 15 секунд не оплачивается\n📝 @vika_dvmh"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@noir_ag", "post_url": "https://t.me/rueventjob/19211", "cat": "ai_design", "summary": "14. #Видеомонтажер\nДля проекта с регулярными 2–3 видео в день ищут монтажёра влогов и кулинарных роликов формата OF TV (без NSFW). Оплата и подробности обсуждаются индивидуально.\n📝 @noir_ag"}, {"date": "2026-10-22", "channel": "rueventjob", "contact": "@ksu_proL", "post_url": "https://t.me/rueventjob/19211", "cat": "ai_video", "summary": "15. #Рилсмейкер\nДля блогера с аудиторией 1,5 млн подписчиков ищу рилс-монтажёра на постоянный поток ежедневных видео: фильмовые туториалы, вирусные ролики, музыкальный ритм и самостоятельные монтажные решения. Отбор через тестовое; в отклике нужны 2–3 ролика портфолио\n📝 @ksu_proL\n\n\n❤️ Коллеги, плз, тапните ваш царский лайк 🫶🏻 Вам всё равно, а нам приятно))"}, {"date": "2026-10-23", "channel": "rueventjob", "contact": "@lika_neli", "post_url": "https://t.me/rueventjob/19228", "cat": "ai_design", "summary": "1. #Дизайнер\nкарточек товаров для регулярной инфографики и AI-визуалов. Подробности обсуждаются\n📝 @lika_neli"}, {"date": "2026-10-23", "channel": "rueventjob", "contact": "@vialinora", "post_url": "https://t.me/rueventjob/19228", "cat": "ai_design", "summary": "2. #Дизайнер\nДизайн товарных карточек и визуалов с опытом маркетплейсов и нейросетей. Оформлять карточки и готовить коммерческие изображения; условия обсуждаются при отклике\n📝 @vialinora"}, {"date": "2026-10-23", "channel": "rueventjob", "contact": "@aquuuila", "post_url": "https://t.me/rueventjob/19228", "cat": "ai_design", "summary": "3. #Дизайнер\nКоманда по застройке выставок ищет дизайнера стендов: концепции, 3D-визуализации, презентации, конструктив и материалы по брифам клиентов. Нужны 5+ лет опыта, 3ds Max/V-Ray, Photoshop и Illustrator/CorelDRAW. Портфолио обязательно\n📝 @aquuuila"}, {"date": "2026-10-23", "channel": "rueventjob", "contact": "@anastasiooos", "post_url": "https://t.me/rueventjob/19228", "cat": "ai_design", "summary": "5. #Бренд_дизайнер\nДля телевизионного реалити/развлекательного шоу нужен дизайн-комплекс: логотип, айдентика, баннеры для офлайн-кастинга и эфирная графика федерального канала. Требуются опыт брендинга ТВ и эфирной графики, высокая скорость; бюджет обсуждается, старт срочный\n📝 @anastasiooos"}, {"date": "2026-10-23", "channel": "rueventjob", "contact": "@SashaPiterPro", "post_url": "https://t.me/rueventjob/19228", "cat": "web_bot", "summary": "6. #Графдизайнер\nНужно разработать графику для YouTube-канала, которая впоследствии будет анимироваться. При отклике просят примеры работ и прайс; состав комплекта обсуждается с заказчиком\n📝 @SashaPiterPro"}, {"date": "2026-10-23", "channel": "rueventjob", "contact": "@anika_galina", "post_url": "https://t.me/rueventjob/19228", "cat": "web_bot", "summary": "7. #Моушндизайнер\nДля коммерческого шоу о путешествиях: разработать заставку, титры и анимацию всех графических элементов проекта. Ищут motion/графического дизайнера с опытом видео, ТВ или кино; в отклике нужны релевантные работы\n📝 @anika_galina"}, {"date": "2026-10-23", "channel": "rueventjob", "contact": "@velayy", "post_url": "https://t.me/rueventjob/19228", "cat": "ai_video", "summary": "8. #Моушнмонтажер\nПроект плагина qwixplugin ищет опытных монтажёров англоязычных роликов с motion-графикой в After Effects. Нужны качественная динамика, понимание удержания и базовый английский. Оплата $50–100 за ролик, в отклик — шоурил и описание опыта\n📝 @velayy"}, {"date": "2026-10-23", "channel": "rueventjob", "contact": "@Little_Dixa", "post_url": "https://t.me/rueventjob/19228", "cat": "ai_design", "summary": "9. #ИИ_художник\nВ коммерческие проекты ищут AI-креаторов, умеющих создавать реалистичные визуалы. При отклике нужны портфолио и ориентировочная ставка за проект; предполагается проектное сотрудничество\n📝 @Little_Dixa"}, {"date": "2026-10-23", "channel": "rueventjob", "contact": "@brattzzi", "post_url": "https://t.me/rueventjob/19228", "cat": "ai_video", "summary": "10. #ИИ_видеокреатор\nДля регулярных 7–10 роликов в месяц ищут специалиста по HeyGen: создать реалистичного AI-аватара по фото/видео и генерировать видео под голосовые сообщения с синхронизацией губ; дополнительный монтаж обсуждается. Нужны примеры и прайс отдельно на аватара и ролики\n📝 @brattzzi"}];
+
+let crmState = {};
+try { crmState = JSON.parse(localStorage.getItem("cash_crm_v1") || "{}"); } catch(e) {}
+const savedHost = localStorage.getItem("cash_base_url") || "";
+document.getElementById("publicBaseUrl").value = savedHost;
+
+function saveBaseUrl() {
+  localStorage.setItem("cash_base_url", document.getElementById("publicBaseUrl").value.trim());
+  updateGenerator();
+}
+
+function getDemoBase() {
+  const v = document.getElementById("publicBaseUrl").value.trim();
+  if (!v) return new URL("demo.html", window.location.href).href;
+  return v.endsWith(".html") ? v : (v.replace(/\/$/, "") + "/demo.html");
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg || "✅ Скопировано в буфер обмена!";
+  t.style.display = "block";
+  setTimeout(() => { t.style.display = "none"; }, 2400);
+}
+
+function copyText(txt) {
+  navigator.clipboard.writeText(txt).then(() => showToast("✅ Готовый текст скопирован — отправляй клиенту!"));
+}
+
+function switchTab(id, btn) {
+  ["b2b", "builder", "tggigs", "bounties"].forEach(k => {
+    document.getElementById("tab-" + k).style.display = (k === id) ? "block" : "none";
+  });
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+function buildB2BPitch(lead) {
+  const demoUrl = getDemoBase() + "?client=" + encodeURIComponent(lead.slug);
+  const speedNote = lead.ms > 1600
+    ? ("страница грузится ~" + (lead.ms/1000).toFixed(1) + " сек на мобильном и нет быстрого онлайн-расчёта стоимости")
+    : "нет интерактивного 45-секундного калькулятора сметы с фиксацией в Telegram";
+  return (
+    "Добрый день! Заходил к вам на сайт «" + lead.name + "» (" + lead.url.replace(/^https?:\/\//,"").replace(/\/$/,"") + ") со смартфона — обратил внимание, что " + speedNote + ", из-за чего часть горячих клиентов с рекламы уходит узнавать цены к конкурентам.\n\n" +
+    "Я веб-разработчик из Минска, не буду предлагать долгие созвоны — я УЖЕ собрал специально под «" + lead.name + "» готовый интерактивный калькулятор стоимости ваших услуг + мгновенную отправку горячей заявки с телефоном клиента прямо вам в Telegram за 1 секунду.\n\n" +
+    "👉 Потыкайте ваш живой прототип прямо с телефона (сверху есть кнопка «Как заявка прилетит в Telegram»):\n" + demoUrl + "\n\n" +
+    "Работает вообще без ежемесячной абонплаты. Если формат нравится — сегодня за 15 минут привяжу к вашему личному Telegram и дам готовую кнопку на сайт / ссылку для Instagram под ключ за 350 BYN (~$105). Оплата строго ПОСЛЕ подключения и живой проверки на вашем телефоне. Подключим тест?"
+  );
+}
+
+function setStatus(slug, val) {
+  crmState[slug] = val;
+  localStorage.setItem("cash_crm_v1", JSON.stringify(crmState));
+  updateKpis();
+  renderB2B();
+}
+
+function updateKpis() {
+  const vals = Object.values(crmState);
+  const sent = vals.filter(v => v === "sent" || v === "talk" || v === "paid").length;
+  const paid = vals.filter(v => v === "paid").length;
+  const rev = paid * 110;
+  document.getElementById("kpiSent").textContent = sent;
+  document.getElementById("kpiPaidCnt").textContent = paid;
+  document.getElementById("kpiRevenue").textContent = "$" + rev + " / $1,000";
+  document.getElementById("goalFill").style.width = Math.min(100, Math.round((rev / 1000) * 100)) + "%";
+}
+
+function renderB2B() {
+  const q = document.getElementById("b2bSearch").value.trim().toLowerCase();
+  const n = document.getElementById("b2bNiche").value;
+  const onlyTg = document.getElementById("onlyTgChk").checked;
+  const root = document.getElementById("b2bList");
+
+  const filtered = LEADS.filter(l => {
+    if (n !== "all" && l.ncode !== n) return false;
+    if (onlyTg && !l.tg) return false;
+    if (q && !(l.name.toLowerCase().includes(q) || l.url.toLowerCase().includes(q) || l.phone.toLowerCase().includes(q) || l.addr.toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  root.innerHTML = filtered.map((l, idx) => {
+    const st = crmState[l.slug] || "new";
+    const cls = st === "paid" ? "paid" : (st !== "new" ? "sent" : "");
+    const demoHref = "demo.html?client=" + encodeURIComponent(l.slug);
+    const cleanDigits = (l.phone || "").replace(/[^\d]/g, "");
+    return '<div class="lead-card ' + cls + '">' +
+      '<div>' +
+        '<div class="l-title">' + (idx + 1) + '. ' + l.name +
+          ' <span class="badge b-niche">' + l.niche + '</span>' +
+          (l.ms > 1700 ? ' <span class="badge b-slow">⏱ ' + l.ms + ' мс</span>' : '') +
+          (l.tg ? ' <span class="badge b-tg">✈️ Есть TG</span>' : '') +
+        '</div>' +
+        '<div class="l-meta">📍 ' + l.addr + ' • <a href="' + l.url + '" target="_blank" style="color:#93c5fd">' + l.url + '</a></div>' +
+        '<div class="l-pain">⚠️ Точка роста: ' + l.pain + '</div>' +
+      '</div>' +
+      '<div class="contacts-col">' +
+        (l.tg ? '<a class="c-link tg" href="' + l.tg + '" target="_blank">✈️ Открыть Telegram</a>' : '') +
+        (l.phone ? '<a class="c-link" href="tel:+' + cleanDigits + '">📞 ' + l.phone + '</a>' : '') +
+        (cleanDigits ? '<a class="c-link" href="https://t.me/+' + cleanDigits + '" target="_blank">💜 TG по номеру</a>' : '') +
+        (l.email ? '<a class="c-link" href="mailto:' + l.email + '">✉️ ' + l.email + '</a>' : '') +
+      '</div>' +
+      '<div class="actions-col">' +
+        '<a class="act-btn btn-demo" href="' + demoHref + '" target="_blank">🚀 Демо клиента</a>' +
+        '<button class="act-btn btn-copy" onclick="copyLeadPitch(\'' + l.slug + '\')">📋 Скопировать оффер</button>' +
+        '<select class="status-sel" onchange="setStatus(\'' + l.slug + '\', this.value)">' +
+          '<option value="new" ' + (st==="new"?"selected":"") + '>⏳ Ожидает</option>' +
+          '<option value="sent" ' + (st==="sent"?"selected":"") + '>📨 Отправлено</option>' +
+          '<option value="talk" ' + (st==="talk"?"selected":"") + '>💬 Диалог</option>' +
+          '<option value="paid" ' + (st==="paid"?"selected":"") + '>💰 ОПЛАЧЕНО ($110)</option>' +
+        '</select>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function copyLeadPitch(slug) {
+  const lead = LEADS.find(x => x.slug === slug);
+  if (!lead) return;
+  if (!crmState[slug] || crmState[slug] === "new") {
+    crmState[slug] = "sent";
+    localStorage.setItem("cash_crm_v1", JSON.stringify(crmState));
+    updateKpis();
+    renderB2B();
+  }
+  copyText(buildB2BPitch(lead));
+}
+
+function updateGenerator() {
+  const name = document.getElementById("genName").value.trim() || "АвтоСтудия";
+  const niche = document.getElementById("genNiche").value;
+  const phone = document.getElementById("genPhone").value.trim();
+  const addr = document.getElementById("genAddr").value.trim();
+  const curr = document.getElementById("genCurr").value;
+
+  const q = new URLSearchParams({ name, niche, phone, addr, curr }).toString();
+  const fullUrl = getDemoBase() + "?" + q;
+  document.getElementById("genLinkOut").value = fullUrl;
+  document.getElementById("genOpenBtn").href = "demo.html?" + q;
+  document.getElementById("genPitchOut").value =
+    "Добрый день! Специально под «" + name + "» (" + addr + ") собрал интерактивный 45-секундный калькулятор стоимости услуг с мгновенной пересылкой горячих заявок прямо в ваш Telegram (без абонплаты!).\n\n" +
+    "👉 Посмотрите готовый рабочий прототип под вашу компанию:\n" + fullUrl + "\n\n" +
+    "Если зайдёт — сегодня подключу к вашему сайту/Instagram и вашему Telegram под ключ. Оплата строго после проверки на вашем телефоне!";
+  const wBase = getDemoBase().replace(/demo\.html.*$/, "widget.js");
+  document.getElementById("genWidgetOut").value = '<script src="' + wBase + '" data-client="custom" defer><\/script>';
+}
+
+function buildGigPitch(idx) {
+  const g = TG_GIGS[idx];
+  if (g.cat === "web_bot") {
+    return "Здравствуйте! Пишу по вашей задаче из канала (" + g.date + "). Разрабатываю быстрые конверсионные лендинги, квиз-калькуляторы и Telegram-ботов (Python / Tilda / HTML+JS) с высокой скоростью сдачи. Могу уже сегодня за 30 минут набросать живой кликабельный прототип первого экрана / структуры под ваш проект бесплатно, чтобы вы сразу оценили уровень. Прислать примеры и обсудить детали?";
+  }
+  if (g.cat === "ai_design") {
+    return "Добрый день! Откликаюсь по вашей вакансии на дизайн / ИИ-визуал (" + g.date + "). Работаю со связкой коммерческой инфографики + современных генеративных моделей: чистая типографика, высокая кликабельность (CTR) и сдача день-в-день. Готов сделать 1 тестовый концепт под ваш продукт сегодня, чтобы вы оценили качество в деле. Скинете ТЗ/референс?";
+  }
+  if (g.cat === "ai_video") {
+    return "Приветствую! Пишу по задаче на Reels / AI-видео и озвучку (" + g.date + "). Собираю динамичные ролики с чистым AI-войсовером, цепляющими хуками первых 3 секунд и плотными субтитрами под удержание. Соблюдаю жёсткие дедлайны на потоке. Готов оперативно выполнить тестовый фрагмент по вашему сценарию — куда удобнее скинуть примеры?";
+  }
+  return "Добрый день! Пишу по вашему объявлению от " + g.date + ". Быстро погружаюсь в продукт, работаю структурно и сдаю точно в дедлайн без воды. Готов выполнить небольшое прицельное тестовое по вашей фактуре уже сегодня. Актуально ли ещё обсудить?";
+}
+
+function renderTgGigs() {
+  const q = document.getElementById("tgSearch").value.trim().toLowerCase();
+  const cat = document.getElementById("tgCat").value;
+  const root = document.getElementById("tgGigsList");
+
+  const catLabels = {
+    web_bot: "💻 Сайты / Боты / UI",
+    ai_design: "🎨 ИИ-Дизайн / Инфографика",
+    ai_video: "🎬 ИИ-Видео / Reels",
+    content: "✍️ Контент / Сценарии"
+  };
+
+  root.innerHTML = TG_GIGS.map((g, idx) => ({ g, idx })).filter(({ g }) => {
+    if (cat !== "all" && g.cat !== cat) return false;
+    if (q && !(g.summary.toLowerCase().includes(q) || g.contact.toLowerCase().includes(q))) return false;
+    return true;
+  }).map(({ g, idx }) => {
+    const cleanUser = g.contact.replace(/^@/, "");
+    return '<div class="lead-card">' +
+      '<div style="grid-column: span 2;">' +
+        '<div class="l-title"><span class="badge b-niche">' + (catLabels[g.cat] || g.cat) + '</span> ' +
+          '<span style="font-size:13px;color:#94a3b8;">📅 ' + g.date + ' • <a href="' + g.post_url + '" target="_blank" style="color:#93c5fd">' + g.channel + '</a></span>' +
+        '</div>' +
+        '<div style="font-size:13px;color:#e2e8f0;margin-top:8px;white-space:pre-line;line-height:1.48;">' + g.summary.replace(/</g,"&lt;") + '</div>' +
+      '</div>' +
+      '<div class="actions-col">' +
+        '<a class="act-btn btn-demo" href="https://t.me/' + cleanUser + '" target="_blank">✈️ Написать ' + g.contact + '</a>' +
+        '<button class="act-btn btn-copy" onclick="copyText(buildGigPitch(' + idx + '))">📋 Скопировать отклик</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+updateKpis();
+renderB2B();
+updateGenerator();
+renderTgGigs();
+</script>
+</body>
+</html>
